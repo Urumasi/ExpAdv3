@@ -17,9 +17,9 @@ if not Extension then
 	error("Unable to get extention meta table for editor upgrades.")
 end
 
-function Extension.RegisterEditorMenu(this, name, icon, open, close)
-	hook.Add("Expression3.AddGolemTabTypes", "Expression3." .. this.name .. "." .. name, function(editor)
-		if this.enabled then
+function Extension:RegisterEditorMenu(name, icon, open, close)
+	hook.Add("Expression3.AddGolemTabTypes", "Expression3." .. self.name .. "." .. name, function(editor)
+		if self.enabled then
 			editor:AddTabType(name, function(self, ...)
 				local menu = self.tMenuTabs[name]
 

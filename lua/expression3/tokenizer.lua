@@ -103,34 +103,34 @@ function TOKENIZER.New(lang)
 	return setmetatable({}, TOKENIZER)
 end
 
-function TOKENIZER.Initalize(this, lang, script)
+function TOKENIZER:Initalize(lang, script)
 	if KEYWORDS[lang] and TOKENS[lang] then
-		this.__pos = 0
-		this.__offset = 0
-		this.__depth = 0
+		self.__pos = 0
+		self.__offset = 0
+		self.__depth = 0
 
-		this.__char = ""
-		this.__data = ""
-		this.__dataStart = 1
-		this.__dataEnd = 1
+		self.__char = ""
+		self.__data = ""
+		self.__dataStart = 1
+		self.__dataEnd = 1
 
-		this.__tokenPos = 0
-		this.__tokenLine = 0
-		this.__tokenChar = 0
+		self.__tokenPos = 0
+		self.__tokenLine = 0
+		self.__tokenChar = 0
 
-		this.__readChar = 1
-		this.__readLine = 1
+		self.__readChar = 1
+		self.__readLine = 1
 
-		this.__tokens = {}
-		this.__script = script
-		this.__buffer = script
-		this.__lengh = string.len(script)
+		self.__tokens = {}
+		self.__script = script
+		self.__buffer = script
+		self.__lengh = string.len(script)
 
-		this.language = lang
-		this.tokens = TOKENS[lang]
-		this.keywords = KEYWORDS[lang]
+		self.language = lang
+		self.tokens = TOKENS[lang]
+		self.keywords = KEYWORDS[lang]
 
-		this:NextChar()
+		self:NextChar()
 	else
 		return nil, "No such language."
 	end
@@ -138,7 +138,7 @@ end
 
 function TOKENIZER.Run(this)
 	--TODO: PcallX for stack traces on internal errors?
-	local status, result = pcall(this._Run, this)
+	local status, result = pcall(self._Run, this)
 
 	if status then
 		return true, result
@@ -156,18 +156,18 @@ function TOKENIZER.Run(this)
 end
 
 function TOKENIZER._Run(this)
-	while this.__char ~= nil do
-		this:Loop()
+	while self.__char ~= nil do
+		self:Loop()
 	end
 
 	local result = {}
-	result.tokens = this.__tokens
-	result.script = this.__buffer
+	result.tokens = self.__tokens
+	result.script = self.__buffer
 
 	return result
 end
 
-function TOKENIZER.Throw(this, offset, msg, fst, ...)
+function TOKENIZER:Throw(offset, msg, fst, ...)
 	local err = {}
 
 	if fst then
@@ -175,8 +175,8 @@ function TOKENIZER.Throw(this, offset, msg, fst, ...)
 	end
 
 	err.state = "tokenizer"
-	err.char = this.__readChar + offset
-	err.line = this.__readLine
+	err.char = self.__readChar + offset
+	err.line = self.__readLine
 	err.msg = msg
 
 	error(err,0)
@@ -186,110 +186,110 @@ end
 ]]
 
 function TOKENIZER.NextChar(this)
-	this.__dataEnd = this.__dataEnd + 1
-	this.__data = this.__data .. this.__char
-	this:SkipChar()
+	self.__dataEnd = self.__dataEnd + 1
+	self.__data = self.__data .. self.__char
+	self:SkipChar()
 end
 
 function TOKENIZER.PrevChar(this)
-	this.__dataEnd = this.__dataEnd - 2
-	this.__pos = this.__pos - 2
-	this.__data = string.sub(this.__data, 0, #this.__data - 2)
-	this:SkipChar()
+	self.__dataEnd = self.__dataEnd - 2
+	self.__pos = self.__pos - 2
+	self.__data = string.sub(self.__data, 0, #self.__data - 2)
+	self:SkipChar()
 end
 
 function TOKENIZER.SkipChar(this)
-	if this.__lengh < this.__pos then
-		this.__char = nil
-	elseif this.__char == "\n" then
-		this:PushLine()
+	if self.__lengh < self.__pos then
+		self.__char = nil
+	elseif self.__char == "\n" then
+		self:PushLine()
 	else
-		this:PushChar()
+		self:PushChar()
 	end
 end
 
 function TOKENIZER.PushLine(this)
-	this.__readLine = this.__readLine + 1
-	this.__readChar = 1
+	self.__readLine = self.__readLine + 1
+	self.__readChar = 1
 
-	this.__pos = this.__pos + 1
-	this.__char = string.sub(this.__script, this.__pos, this.__pos)
+	self.__pos = self.__pos + 1
+	self.__char = string.sub(self.__script, self.__pos, self.__pos)
 end
 
 function TOKENIZER.PushChar(this)
-	this.__readChar = this.__readChar + 1
+	self.__readChar = self.__readChar + 1
 
-	this.__pos = this.__pos + 1
-	this.__char = string.sub(this.__script, this.__pos, this.__pos)
+	self.__pos = self.__pos + 1
+	self.__char = string.sub(self.__script, self.__pos, self.__pos)
 end
 
 function TOKENIZER.Clear(this)
-	this.__data = ""
-	this.__match = ""
-	this.__dataStart = this.__pos
-	this.__dataEnd = this.__pos
+	self.__data = ""
+	self.__match = ""
+	self.__dataStart = self.__pos
+	self.__dataEnd = self.__pos
 end
 
 --[[
 ]]
 
-function TOKENIZER.NextPattern(this, pattern, exact)
-	if this.__char == nil then
+function TOKENIZER:NextPattern(pattern, exact)
+	if self.__char == nil then
 		return false
 	end
 
-	local s, e, r = string.find(this.__script, pattern, this.__pos, exact)
+	local s, e, r = string.find(self.__script, pattern, self.__pos, exact)
 
-	if s ~= this.__pos then
+	if s ~= self.__pos then
 		return false
 	end
 
 	if not r then
-		r = string.sub(this.__script, s, e)
+		r = string.sub(self.__script, s, e)
 	end
 
-	this.__pos = e + 1
-	this.__dataStart = s
-	this.__dataEnd = e
-	this.__data = this.__data .. r
+	self.__pos = e + 1
+	self.__dataStart = s
+	self.__dataEnd = e
+	self.__data = self.__data .. r
 
-	this.__match = r
+	self.__match = r
 
-	if this.__pos > this.__lengh then
-		this.__char = nil
+	if self.__pos > self.__lengh then
+		self.__char = nil
 	else
-		this.__char = string.sub(this.__script, this.__pos, this.__pos)
+		self.__char = string.sub(self.__script, self.__pos, self.__pos)
 	end
 
 	local ls = string.Explode("\n", r)
 
 	if #ls > 1 then
-		this.__readLine = this.__readLine + #ls - 1
-		this.__readChar = string.len(ls[#ls]) + 1
+		self.__readLine = self.__readLine + #ls - 1
+		self.__readChar = string.len(ls[#ls]) + 1
 	else
-		this.__readChar = this.__readChar + string.len(ls[#ls])
+		self.__readChar = self.__readChar + string.len(ls[#ls])
 	end
 
 	return true
 end
 
-function TOKENIZER.MatchPattern(this, pattern, exact)
-	local s, e, r = string.find(this.__script, pattern, this.__pos, exact)
+function TOKENIZER:MatchPattern(pattern, exact)
+	local s, e, r = string.find(self.__script, pattern, self.__pos, exact)
 
-	if s ~= this.__pos then
+	if s ~= self.__pos then
 		return false
 	end
 
-	return true, string.sub(this.__script. this.__pos, this.__pos)
+	return true, string.sub(self.__script. self.__pos, self.__pos)
 end
 
-function TOKENIZER.NextPatterns(this, exact, pattern, pattern2, ...)
-	if this:NextPattern(pattern, exact) then
+function TOKENIZER:NextPatterns(exact, pattern, pattern2, ...)
+	if self:NextPattern(pattern, exact) then
 		return true
 	end
 
 	if pattern2 then
-		return this:NextPatterns(exact, pattern2, ...)
+		return self:NextPatterns(exact, pattern2, ...)
 	end
 
 	return false
@@ -298,10 +298,10 @@ end
 --[[
 ]]
 
-function TOKENIZER.CreateToken(this, type, name, data, origonal)
+function TOKENIZER:CreateToken(type, name, data, origonal)
 
 	if not data then
-		data = this.__data
+		data = self.__data
 	end
 
 	local tkn = {}
@@ -309,123 +309,123 @@ function TOKENIZER.CreateToken(this, type, name, data, origonal)
 	tkn.name = name
 	tkn.data = data
 
-	tkn.start = this.__dataStart + this.__offset
-	tkn.stop = this.__dataEnd + this.__offset
-	tkn.pos = this.__pos
-	tkn.char = this.__readChar
-	tkn.line = this.__readLine
-	tkn.depth = this.__depth
+	tkn.start = self.__dataStart + self.__offset
+	tkn.stop = self.__dataEnd + self.__offset
+	tkn.pos = self.__pos
+	tkn.char = self.__readChar
+	tkn.line = self.__readLine
+	tkn.depth = self.__depth
 	tkn.orig = origonal
 	
-	local prev = this.__tokens[#this.__tokens]
+	local prev = self.__tokens[#self.__tokens]
 
 	if prev and prev.line < tkn.line then
 		tkn.newLine = true
 	end
 
-	tkn.index = #this.__tokens + 1
-	this.__tokens[tkn.index] = tkn
+	tkn.index = #self.__tokens + 1
+	self.__tokens[tkn.index] = tkn
 end
 
 --[[
 ]]
 
 function TOKENIZER.SkipSpaces(this)
-	this:NextPattern("^[%s\n]*")
+	self:NextPattern("^[%s\n]*")
 
-	local r = this.__match
+	local r = self.__match
 
-	this:Clear()
+	self:Clear()
 
 	return r
 end
 
 function TOKENIZER.SkipComments(this)
-	if this:NextPattern("^/%*.-%*/") or this:NextPattern("^//.-\n") then
-		this.__data = ""
-		this.__skip = true
+	if self:NextPattern("^/%*.-%*/") or self:NextPattern("^//.-\n") then
+		self.__data = ""
+		self.__skip = true
 		return true
-	elseif this:NextPattern("/*", true) then
-		this:Error(0, "Un-terminated multi line comment (/*)", 0)
+	elseif self:NextPattern("/*", true) then
+		self:Error(0, "Un-terminated multi line comment (/*)", 0)
 	else
 		return false
 	end
 end
 
-function TOKENIZER.Replace(this, str)
-	local len = string.len(this.__data) - string.len(str)
+function TOKENIZER:Replace(str)
+	local len = string.len(self.__data) - string.len(str)
 	
-	this.__data = str
+	self.__data = str
 
-	this.__offset = this.__offset + len
+	self.__offset = self.__offset + len
 end
 
 --[[
 ]]
 
 function TOKENIZER.Loop(this)
-	if this.__char == nil then
+	if self.__char == nil then
 		return false
 	end
 
-	this:SkipSpaces()
+	self:SkipSpaces()
 
 	-- Comments need to be (--[[]] && --) not (/**/ & //)
 	-- Comments also need to be ignored.
 
 	local skip = false
 
-	if this:NextPattern("^/%*.-%*/") then
+	if self:NextPattern("^/%*.-%*/") then
 		skip = true
-		local cmnt = "--[[" .. string.sub(this.__data, 3, string.len(this.__data) - 2) .. "]]"
-		this:Replace(cmnt)
-	elseif this:NextPattern("/*", true) then
-		this:Throw(0, "Un-terminated multi line comment (/*)", 0)
-	elseif this:NextPattern("^//.-\n") then
+		local cmnt = "--[[" .. string.sub(self.__data, 3, string.len(self.__data) - 2) .. "]]"
+		self:Replace(cmnt)
+	elseif self:NextPattern("/*", true) then
+		self:Throw(0, "Un-terminated multi line comment (/*)", 0)
+	elseif self:NextPattern("^//.-\n") then
 		skip = true
-		local cmnt = "--" .. string.sub(this.__data, 3)
-		this:Replace(cmnt)
+		local cmnt = "--" .. string.sub(self.__data, 3)
+		self:Replace(cmnt)
 	end
 
 	if skip then
-		this:Clear()
+		self:Clear()
 		return true
 	end
 
 	-- Numbers
 
-	if this:NextPattern("^0x[%x]+") then
-		local n = tonumber(this.__data)
+	if self:NextPattern("^0x[%x]+") then
+		local n = tonumber(self.__data)
 
 		if not n then
-			this:Throw(0, "Invalid number format (%s)", 0, this.__data)
+			self:Throw(0, "Invalid number format (%s)", 0, self.__data)
 		end
 
-		this:CreateToken("num", "hex", n)
+		self:CreateToken("num", "hex", n)
 
 		return true
 	end
 
-	if this:NextPattern("^0b[01]+") then
-		local n = tonumber(string.sub(this.__data, 3), 2)
+	if self:NextPattern("^0b[01]+") then
+		local n = tonumber(string.sub(self.__data, 3), 2)
 
 		if not n then
-			this:Throw(0, "Invalid number format (%s)", 0, this.__data)
+			self:Throw(0, "Invalid number format (%s)", 0, self.__data)
 		end
 
-		this:CreateToken("num", "bin", n)
+		self:CreateToken("num", "bin", n)
 
 		return true
 	end
 
-	if this:NextPattern("^%d+%.?%d*") then
-		local n = tonumber(this.__data)
+	if self:NextPattern("^%d+%.?%d*") then
+		local n = tonumber(self.__data)
 
 		if not n then
-			this:Throw(0, "Invalid number format (%s)", 0, this.__data)
+			self:Throw(0, "Invalid number format (%s)", 0, self.__data)
 		end
 
-		this:CreateToken("num", "real", n)
+		self:CreateToken("num", "real", n)
 
 		return true
 	end
@@ -434,29 +434,29 @@ function TOKENIZER.Loop(this)
 	
 	local pattern = false
 
-	if this.__char == "@" then
-		this:SkipChar()
+	if self.__char == "@" then
+		self:SkipChar()
 
-		if not (this.__char == '"' or this.__char == "'") then
-			this:PrevChar()
+		if not (self.__char == '"' or self.__char == "'") then
+			self:PrevChar()
 		else
 			pattern = true
 		end
 	end
 
-	if this.__char == '"' or this.__char == "'" then
-		local strChar = this.__char
+	if self.__char == '"' or self.__char == "'" then
+		local strChar = self.__char
 
 		local escp = false
 
-		this:SkipChar()
+		self:SkipChar()
 
-		while this.__char do
-			local c = this.__char
+		while self.__char do
+			local c = self.__char
 
 			if c == "\n" then
 				if strChar == "'" then
-					this:NextChar()
+					self:NextChar()
 				else
 					break
 				end
@@ -465,96 +465,96 @@ function TOKENIZER.Loop(this)
 					break
 				elseif c == "\\" then
 					escp = true
-					this:SkipChar()
+					self:SkipChar()
 					-- Escape sequence.
 				else
-					this:NextChar()
+					self:NextChar()
 				end
 			elseif c == "\\" then
 				escp = false
-				this:NextChar()
+				self:NextChar()
 			elseif c == strChar then
 				escp = false
-				this.__char = "\n"
-				this:NextChar()
+				self.__char = "\n"
+				self:NextChar()
 			elseif c == "t" then
 				escp = false
-				this.__char = "\t"
-				this:NextChar()
+				self.__char = "\t"
+				self:NextChar()
 			elseif c == "r" then
 				escp = false
-				this.__char = "\r"
-				this:NextChar()
-			elseif this:NextPattern("^([0-9]+)") then
-				local n = tonumber(this.__match)
+				self.__char = "\r"
+				self:NextChar()
+			elseif self:NextPattern("^([0-9]+)") then
+				local n = tonumber(self.__match)
 
 				if not n or n < 0 or n > 255 then
-					this:Throw(0, "Invalid char (%s)", n)
+					self:Throw(0, "Invalid char (%s)", n)
 				end
 
 				escp = false
-				this.__pos = this.__pos - 1
-				this.__data = this.__data .. string.char(n)
-				this:SkipChar()
+				self.__pos = self.__pos - 1
+				self.__data = self.__data .. string.char(n)
+				self:SkipChar()
 			else
-				this:Throw(0, "Unfinished escape sequence (\\%s)", this.__char)
+				self:Throw(0, "Unfinished escape sequence (\\%s)", self.__char)
 			end
 		end
 
-		if this.__char and this.__char == strChar then
-			this:SkipChar()
+		if self.__char and self.__char == strChar then
+			self:SkipChar()
 
 			-- Multi line strings need to be converted to lua syntax.
 			if strChar == "'" then
-				local str = "[[" .. string.sub(this.__data, 1, string.len(this.__data)) .. "]]"
-				this:Replace(str)
+				local str = "[[" .. string.sub(self.__data, 1, string.len(self.__data)) .. "]]"
+				self:Replace(str)
 			else
-				local str = "\"" .. string.sub(this.__data, 1, string.len(this.__data)) .. "\""
-				this:Replace(str)
+				local str = "\"" .. string.sub(self.__data, 1, string.len(self.__data)) .. "\""
+				self:Replace(str)
 			end
 
 			if not pattern then
-				this:CreateToken("str", "string")
+				self:CreateToken("str", "string")
 			else
-				this:CreateToken("ptr", "string pattern")
+				self:CreateToken("ptr", "string pattern")
 			end
 
 			return true
 		end
 
-		local str = this.__data
+		local str = self.__data
 
 		if string.len(str) > 10 then
 			str = string.sub(str, 0, 10) .. "..."
 		end
 
-		this:Throw(0, "Unterminated string (\"%s)", str)
+		self:Throw(0, "Unterminated string (\"%s)", str)
 	end
 
 	-- Classes
 	
 	for k, v in pairs(EXPR_CLASSES) do
-		if this:NextPattern("%( *" .. k .. " *%)") then
-			this:CreateToken("cst", "cast", v.id, k)
+		if self:NextPattern("%( *" .. k .. " *%)") then
+			self:CreateToken("cst", "cast", v.id, k)
 			return true
 		end
 
-		if this:NextPattern(k, true) then
-			this:CreateToken("typ", "type", v.id, k)
+		if self:NextPattern(k, true) then
+			self:CreateToken("typ", "type", v.id, k)
 			return true
 		end
 	end
 
 	-- Keywords.
 
-	if this:NextPattern("^[a-zA-Z][a-zA-Z0-9_]*") then
-		local w = this.__data
-		local tkn = this.keywords[w]
+	if self:NextPattern("^[a-zA-Z][a-zA-Z0-9_]*") then
+		local w = self.__data
+		local tkn = self.keywords[w]
 
 		if tkn then
-			this:CreateToken(tkn[1], tkn[2])
+			self:CreateToken(tkn[1], tkn[2])
 		else
-			this:CreateToken("var", "variable")
+			self:CreateToken("var", "variable")
 		end
 		
 		return true
@@ -562,29 +562,29 @@ function TOKENIZER.Loop(this)
 
 	-- Ops
 
-	for k = 1, #this.tokens, 1 do
-		local v = this.tokens[k]
+	for k = 1, #self.tokens, 1 do
+		local v = self.tokens[k]
 		local op = v[1]
 
-		if this:NextPattern(op, true) then
+		if self:NextPattern(op, true) then
 			if op == "}" then
-				this.__depth = this.__depth - 1
+				self.__depth = self.__depth - 1
 			end
 
-			this:CreateToken(v[2], v[3])
+			self:CreateToken(v[2], v[3])
 
 			if op == "{" then
-				this.__depth = this.__depth + 1
+				self.__depth = self.__depth + 1
 			end
 
 			return true
 		end
 	end
 
-	if not this.__char or this.__char == "" then
-		this.__char = nil
+	if not self.__char or self.__char == "" then
+		self.__char = nil
 	else
-		this:Throw(0, "Unknown syntax found (%s)", tostring(this.__char))
+		self:Throw(0, "Unknown syntax found (%s)", tostring(self.__char))
 	end
 end
 

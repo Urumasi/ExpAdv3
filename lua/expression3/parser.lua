@@ -89,29 +89,29 @@ function PARSER.New()
 	return setmetatable({}, PARSER)
 end
 
-function PARSER.Initalize(this, instance)
-	this.__pos = 0
-	this.__depth = 0
-	this.__scope = 0
-	this.__instructions = {}
+function PARSER:Initalize(instance)
+	self.__pos = 0
+	self.__depth = 0
+	self.__scope = 0
+	self.__instructions = {}
 
-	this.__token = instance.tokens[0]
-	this.__next = instance.tokens[1]
-	this.__total = #instance.tokens
-	this.__tokens = instance.tokens
-	this.__script = instance.script
+	self.__token = instance.tokens[0]
+	self.__next = instance.tokens[1]
+	self.__total = #instance.tokens
+	self.__tokens = instance.tokens
+	self.__script = instance.script
 
-	this.__tasks = {}
+	self.__tasks = {}
 
-	this.__directives = {}
-	this.__directives.inport = {}
-	this.__directives.outport = {}
+	self.__directives = {}
+	self.__directives.inport = {}
+	self.__directives.outport = {}
 
 end
 
 function PARSER.Run(this)
 	--TODO: PcallX for stack traces on internal errors?
-	local status, result = pcall(this._Run, this)
+	local status, result = pcall(self._Run, this)
 
 	if status then
 		return true, result
@@ -130,16 +130,16 @@ end
 
 function PARSER._Run(this)
 	local result = {}
-	result.instruction = this:Root()
-	result.script = this.__script
-	result.tasks = this.__tasks
-	result.tokens = this.__tokens
-	result.directives = this.__directives
+	result.instruction = self:Root()
+	result.script = self.__script
+	result.tasks = self.__tasks
+	result.tokens = self.__tokens
+	result.directives = self.__directives
 
 	return result
 end
 
-function PARSER.Throw(this, token, msg, fst, ...)
+function PARSER:Throw(token, msg, fst, ...)
 	local err = {}
 
 	if fst then
@@ -158,12 +158,12 @@ end
 ]]
 
 function PARSER.Next(this)
-	this.__pos = this.__pos + 1
+	self.__pos = self.__pos + 1
 	
-	this.__token = this.__tokens[this.__pos]
-	this.__next = this.__tokens[this.__pos + 1]
+	self.__token = self.__tokens[self.__pos]
+	self.__next = self.__tokens[self.__pos + 1]
 
-	if this.__pos > this.__total then
+	if self.__pos > self.__total then
 		return false
 	end
 
@@ -171,12 +171,12 @@ function PARSER.Next(this)
 end
 
 function PARSER.HasTokens(this)
-	return this.__next ~= nil
+	return self.__next ~= nil
 end
 
-function PARSER.CheckToken(this, type, ...)
-	if this.__pos < this.__total then
-		local tkn = this.__next
+function PARSER:CheckToken(type, ...)
+	if self.__pos < self.__total then
+		local tkn = self.__next
 
 		for _, t in pairs({type, ...}) do
 			if t == tkn.type then
@@ -188,18 +188,18 @@ function PARSER.CheckToken(this, type, ...)
 	return false
 end
 
-function PARSER.Accept(this, type, ...)
-	if this:CheckToken(type, ...) then
-		this:Next()
+function PARSER:Accept(type, ...)
+	if self:CheckToken(type, ...) then
+		self:Next()
 		return true
 	end
 
 	return false
 end
 
-function PARSER.AcceptWithData(this, type, data)
-	if this:CheckToken(type) and this.__next.data == data then
-		this:Next()
+function PARSER:AcceptWithData(type, data)
+	if self:CheckToken(type) and self.__next.data == data then
+		self:Next()
 		return true
 	end
 
@@ -207,56 +207,56 @@ function PARSER.AcceptWithData(this, type, data)
 end
 
 function PARSER.GetTokenData(this)
-	return this.__token.data
+	return self.__token.data
 end
 
-function PARSER.GetToken(this, pos)
-	if pos >= this.__total then
-		return this.__tokens[pos]
+function PARSER:GetToken(pos)
+	if pos >= self.__total then
+		return self.__tokens[pos]
 	end
 end
 
-function PARSER.StepBackward(this, steps)
+function PARSER:StepBackward(steps)
 	
 	if not steps then
 		steps = 1
 	end
 
-	local pos = this.__pos - (steps + 1)
+	local pos = self.__pos - (steps + 1)
 
 	if pos == 0 then
-		this.__pos = 0
-		this.__token = this.__tokens[0]
-		this.__next = this.__tokens[1]
+		self.__pos = 0
+		self.__token = self.__tokens[0]
+		self.__next = self.__tokens[1]
 		return
 	end
 
-	if pos > this.__total then
-		pos = this.__total
+	if pos > self.__total then
+		pos = self.__total
 	end
 
-	this.__pos = pos
+	self.__pos = pos
 
-	this:Next()
+	self:Next()
 end
 
 function PARSER.GetFirstTokenOnLine(this)
-	for i = this.__pos, 1, -1 do
-		local tkn = this.__tokens[i]
+	for i = self.__pos, 1, -1 do
+		local tkn = self.__tokens[i]
 
 		if tkn.newLine then
 			return tkn
 		end
 	end
 
-	return this.__tokens[1]
+	return self.__tokens[1]
 end
 
-function PARSER.StatmentContains(this, token, type)
-	local i = this.__pos
+function PARSER:StatmentContains(token, type)
+	local i = self.__pos
 
-	while i < this.__total do
-		local tkn = this.__tokens[i]
+	while i < self.__total do
+		local tkn = self.__tokens[i]
 
 		if not tkn then
 			return
@@ -274,12 +274,12 @@ function PARSER.StatmentContains(this, token, type)
 	end
 end
 
-function PARSER.LastInStatment(this, token, type)
+function PARSER:LastInStatment(token, type)
 	local last
 	local i = token.index
 
-	while i <= this.__total do
-		local tkn = this.__tokens[i]
+	while i <= self.__total do
+		local tkn = self.__tokens[i]
 		
 		if not tkn then
 			break
@@ -303,27 +303,27 @@ end
 ]]
 
 function PARSER.Require( this, type, msg, ... )
-	if not this:Accept(type) then
-		this:Throw( this.__token, msg, ... )
+	if not self:Accept(type) then
+		self:Throw( self.__token, msg, ... )
 	end
 end
 
 function PARSER.Exclude( this, tpye, msg, ... )
-	if this:Accept(type) then
-		this:Throw( this.__token, msg, ... )
+	if self:Accept(type) then
+		self:Throw( self.__token, msg, ... )
 	end
 end
 
-function PARSER.ExcludeWhiteSpace(this, msg, ...)
-	if not this:HasTokens() then 
-		this:Throw( this.__token, msg, ... )
+function PARSER:ExcludeWhiteSpace(msg, ...)
+	if not self:HasTokens() then 
+		self:Throw( self.__token, msg, ... )
 	end
 end
 
 --[[
 ]]
 
-function PARSER.StartInstruction(this, _type, token)
+function PARSER:StartInstruction(_type, token)
 	if not type(_type) == "string" then
 		debug.Trace()
 		error("PARSER:StartInstruction got bad instruction type.", _type)
@@ -339,25 +339,25 @@ function PARSER.StartInstruction(this, _type, token)
 	inst.token = token
 	inst.char = token.char
 	inst.line = token.line
-	inst.depth = this.__depth
-	inst.scope = this.__scope
-	this.__depth = this.__depth + 1
+	inst.depth = self.__depth
+	inst.scope = self.__scope
+	self.__depth = self.__depth + 1
 
 	return inst
 end
 
-function PARSER.QueueReplace(this, inst, token, str)
+function PARSER:QueueReplace(inst, token, str)
 	local op = {}
 
 	op.token = token
 	op.str = str
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	tasks.replace = op
@@ -365,17 +365,17 @@ function PARSER.QueueReplace(this, inst, token, str)
 	return op
 end
 
-function PARSER.QueueRemove(this, inst, token)
+function PARSER:QueueRemove(inst, token)
 	local op = {}
 
 	op.token = token
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	tasks.remove = op
@@ -383,12 +383,12 @@ function PARSER.QueueRemove(this, inst, token)
 	return op
 end
 
-function PARSER.QueueInjectionBefore(this, inst, token, str, ...)
-	local tasks = this.__tasks[token.pos]
+function PARSER:QueueInjectionBefore(inst, token, str, ...)
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	if not tasks.prefix then
@@ -410,18 +410,18 @@ function PARSER.QueueInjectionBefore(this, inst, token, str, ...)
 	return r
 end
 
-function PARSER.QueueInjectionAfter(this, inst, token, str, ...)
+function PARSER:QueueInjectionAfter(inst, token, str, ...)
 	local op = {}
 	
 	op.token = token
 	op.str = str
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	if not tasks.postfix then
@@ -445,17 +445,17 @@ function PARSER.QueueInjectionAfter(this, inst, token, str, ...)
 	return r
 end
 
-function PARSER.SetEndResults(this, inst, type, count)
+function PARSER:SetEndResults(inst, type, count)
 	inst.type = type
 	inst.rCount = count or 1
 end
 
-function PARSER.EndInstruction(this, inst, instructions)
+function PARSER:EndInstruction(inst, instructions)
 	inst.instructions = instructions
 
-	inst.final = this.__token
+	inst.final = self.__token
 
-	this.__depth = this.__depth - 1
+	self.__depth = self.__depth - 1
 
 	--print("PARSER->" .. inst.type .. "->#" .. #inst.instructions)
 
@@ -466,62 +466,62 @@ end
 ]]
 
 function PARSER.Root(this)
-	local seq = this:StartInstruction("seq", this.__tokens[1])
+	local seq = self:StartInstruction("seq", self.__tokens[1])
 
-	local stmts = this:Statments(false)
+	local stmts = self:Statments(false)
 
-	return this:EndInstruction(seq, stmts)
+	return self:EndInstruction(seq, stmts)
 end
 
-function PARSER.Block_1(this, _end, lcb)
-	this:ExcludeWhiteSpace( "Further input required at end of code, incomplete statement" )
+function PARSER:Block_1(_end, lcb)
+	self:ExcludeWhiteSpace( "Further input required at end of code, incomplete statement" )
 	
-	if this:Accept("lcb") then
+	if self:Accept("lcb") then
 		
-		local seq = this:StartInstruction("seq", this.__token)
+		local seq = self:StartInstruction("seq", self.__token)
 
 		if lcb then
-			this:QueueRemove(seq, this.__token)
-			this:QueueInjectionAfter(seq, this.__token, lcb)
+			self:QueueRemove(seq, self.__token)
+			self:QueueInjectionAfter(seq, self.__token, lcb)
 		end
 
 		local stmts = {}
 
-		if not this:CheckToken("rcb") then
-			this.__scope = this.__scope + 1
+		if not self:CheckToken("rcb") then
+			self.__scope = self.__scope + 1
 
-			stmts = this:Statments(true)
+			stmts = self:Statments(true)
 
-			this.__scope = this.__scope - 1
+			self.__scope = self.__scope - 1
 		end
 
-		if not this:Accept("rcb") then
-			this:Throw(this.__token, "Right curly bracket (}) missing, to close block")
+		if not self:Accept("rcb") then
+			self:Throw(self.__token, "Right curly bracket (}) missing, to close block")
 		end
 		
-		this:QueueReplace(seq, this.__token, _end and "end" or "")
+		self:QueueReplace(seq, self.__token, _end and "end" or "")
 
-		return this:EndInstruction(seq, stmts)
+		return self:EndInstruction(seq, stmts)
 	end
 
 	do
-		local seq = this:StartInstruction("seq", this.__next)
+		local seq = self:StartInstruction("seq", self.__next)
 
 		if lcb then
-			this:QueueInjectionAfter(seq, this.__token, lcb)
+			self:QueueInjectionAfter(seq, self.__token, lcb)
 		end
 
-		this.__scope = this.__scope + 1
+		self.__scope = self.__scope + 1
 
-		local stmt = this:Statment_1()
+		local stmt = self:Statment_1()
 
-		this.__scope = this.__scope - 1
+		self.__scope = self.__scope - 1
 
 		if _end then
-			this:QueueInjectionAfter(seq, stmt.final, "end")
+			self:QueueInjectionAfter(seq, stmt.final, "end")
 		end
 
-		return this:EndInstruction(seq, { stmt })
+		return self:EndInstruction(seq, { stmt })
 	end
 end
 
@@ -529,65 +529,65 @@ end
 
 ]]
 
-function PARSER.Directive_NAME(this, token, directive)
-	this:Require("str", "String expected to follow directive @name")
+function PARSER:Directive_NAME(token, directive)
+	self:Require("str", "String expected to follow directive @name")
 
-	if this.FirstStatment then
-		this:Throw(token, "Directive @name must appear at top of your code")
-	elseif this.__directives.name then
-		this:Throw(token, "Directive @name must not appear twice.")
+	if self.FirstStatment then
+		self:Throw(token, "Directive @name must appear at top of your code")
+	elseif self.__directives.name then
+		self:Throw(token, "Directive @name must not appear twice.")
 	end
 
-	this.__directives.name = this.__token.data
+	self.__directives.name = self.__token.data
 
-	this:QueueRemove({}, this.__token)
+	self:QueueRemove({}, self.__token)
 end
 
-function PARSER.Directive_MODEL(this, token, directive)
-	this:Require("str", "String expected to follow directive @model")
+function PARSER:Directive_MODEL(token, directive)
+	self:Require("str", "String expected to follow directive @model")
 
-	if this.FirstStatment then
-		this:Throw(token, "Directive @model must appear at top of your code")
-	elseif this.__directives.model then
-		this:Throw(token, "Directive @model must not appear twice.")
+	if self.FirstStatment then
+		self:Throw(token, "Directive @model must appear at top of your code")
+	elseif self.__directives.model then
+		self:Throw(token, "Directive @model must not appear twice.")
 	end
 
-	this.__directives.model = this.__token.data
+	self.__directives.model = self.__token.data
 	
-	this:QueueRemove({}, this.__token)
+	self:QueueRemove({}, self.__token)
 end
 
-function PARSER.Directive_INPUT(this, token, directive)
-	this:Require("typ", "Class expected for inport type, after @input")
+function PARSER:Directive_INPUT(token, directive)
+	self:Require("typ", "Class expected for inport type, after @input")
 
-	local inst = this:StartInstruction("inport", token)
+	local inst = self:StartInstruction("inport", token)
 
-	inst.class = this.__token.data
+	inst.class = self.__token.data
 
 	local class_obj = EXPR_LIB.GetClass(inst.class)
 
 	if not class_obj.wire_in_class then
-		this:Throw(token, "Invalid wired port, class %s can not be used for wired input.", class_obj.name)
+		self:Throw(token, "Invalid wired port, class %s can not be used for wired input.", class_obj.name)
 	end
 
-	this:QueueRemove(inst, this.__token)
+	self:QueueRemove(inst, self.__token)
 
 	local variables = {}
 
-	this:Require("var", "Variable('s) expected after class for inport name.")
+	self:Require("var", "Variable('s) expected after class for inport name.")
 	
-	variables[1] = this.__token
+	variables[1] = self.__token
 
-	this:QueueRemove(inst, this.__token)
+	self:QueueRemove(inst, self.__token)
 
-	while this:Accept("com") do
-		this:QueueRemove(inst, this.__token)
+	while self:Accept("com") do
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("var", "Variable expected after comma (,).")
+		self:Require("var", "Variable expected after comma (,).")
 
-		variables[#variables + 1] = this.__token
+		variables[#variables + 1] = self.__token
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 	end
 
 	inst.variables = variables
@@ -596,40 +596,40 @@ function PARSER.Directive_INPUT(this, token, directive)
 
 	inst.wire_func = class_obj.wire_in_func
 
-	return this:EndInstruction(inst, {})
+	return self:EndInstruction(inst, {})
 end
 
-function PARSER.Directive_OUTPUT(this, token, directive)
-	this:Require("typ", "Class expected for outport type, after @input")
+function PARSER:Directive_OUTPUT(token, directive)
+	self:Require("typ", "Class expected for outport type, after @input")
 
-	local inst = this:StartInstruction("outport", token)
+	local inst = self:StartInstruction("outport", token)
 
-	inst.class = this.__token.data
+	inst.class = self.__token.data
 
 	local class_obj = EXPR_LIB.GetClass(inst.class)
 
 	if not class_obj.wire_out_class then
-		this:Throw(token, "Invalid wired port, class %s can not be used for wired output.", class_obj.name)
+		self:Throw(token, "Invalid wired port, class %s can not be used for wired output.", class_obj.name)
 	end
 
-	this:QueueRemove(inst, this.__token)
+	self:QueueRemove(inst, self.__token)
 
 	local variables = {}
 
-	this:Require("var", "Variable('s) expected after class for outport name.")
+	self:Require("var", "Variable('s) expected after class for outport name.")
 	
-	variables[1] = this.__token
+	variables[1] = self.__token
 
-	this:QueueRemove(inst, this.__token)
+	self:QueueRemove(inst, self.__token)
 
-	while this:Accept("com") do
-		this:QueueRemove(inst, this.__token)
+	while self:Accept("com") do
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("var", "Variable expected after comma (,).")
+		self:Require("var", "Variable expected after comma (,).")
 
-		variables[#variables + 1] = this.__token
+		variables[#variables + 1] = self.__token
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 	end
 
 	inst.variables = variables
@@ -640,17 +640,17 @@ function PARSER.Directive_OUTPUT(this, token, directive)
 
 	inst.wire_func2 = class_obj.wire_in_func
 
-	return this:EndInstruction(inst, {})
+	return self:EndInstruction(inst, {})
 end
 
 --[[
 ]]
 
-function PARSER.Statments(this, block, call)
+function PARSER:Statments(block, call)
 	local sep = false
 	local stmts = {}
 
-	call = call or this.Statment_0
+	call = call or self.Statment_0
 
 		while true do
 
@@ -658,17 +658,17 @@ function PARSER.Statments(this, block, call)
 
 			stmts[#stmts + 1] = stmt
 
-			local seperated = this:Accept("sep")
+			local seperated = self:Accept("sep")
 
 			if not stmt then
 				break
 			end
 
-			if block and this:CheckToken("rcb") then
+			if block and self:CheckToken("rcb") then
 				break
 			end
 
-			if not this:HasTokens() then
+			if not self:HasTokens() then
 				break
 			end
 
@@ -676,16 +676,16 @@ function PARSER.Statments(this, block, call)
 
 			if pre then
 				if pre.line == stmt.line and not sep then
-					this:Throw(stmt.token, "Statements must be separated by semicolon () or newline")
+					self:Throw(stmt.token, "Statements must be separated by semicolon () or newline")
 				end
 			end
 
 			if stmt.type == "return" then
-				this:Throw(stmt.final, "Statement can not appear after return.")
+				self:Throw(stmt.final, "Statement can not appear after return.")
 			elseif stmt.type == "continue" then
-				this:Throw(stmt.final, "Statement can not appear after continue.")
+				self:Throw(stmt.final, "Statement can not appear after continue.")
 			elseif stmt.type == "break" then
-				this:Throw(stmt.final, "Statement can not appear after break.")
+				self:Throw(stmt.final, "Statement can not appear after break.")
 			end
 
 			sep = seperated
@@ -700,55 +700,55 @@ end
 function PARSER.Statment_0(this)
 	local dirLine
 
-	while this:Accept("dir") do
-		local token = this.__token
-		dirLine = this.__token.line
+	while self:Accept("dir") do
+		local token = self.__token
+		dirLine = self.__token.line
 
-		this:QueueRemove({}, token)
+		self:QueueRemove({}, token)
 
-		if not this:Accept("var") then
-			this:Throw(token, "Directive name exspected after @")
+		if not self:Accept("var") then
+			self:Throw(token, "Directive name exspected after @")
 		end
 
-		local directive = this.__token.data
+		local directive = self.__token.data
 
-		this:QueueRemove({}, this.__token)
+		self:QueueRemove({}, self.__token)
 
 		local func = this["Directive_" .. string.upper(directive)]
 
 		if  not func then
-			this:Throw(token, "No such directive @%s", directive)
+			self:Throw(token, "No such directive @%s", directive)
 		end
 
 		local instr = func(this, token, directive)
 
-		sep = this:Accept("sep")
+		sep = self:Accept("sep")
 
 		if sep then
-			this:QueueRemove({}, this.__token)
+			self:QueueRemove({}, self.__token)
 		end
 
 		if instr then
 			return instr
 		end
 
-		if !this:HasTokens() then
+		if !self:HasTokens() then
 			return
 		end
 	end
 
-	if not this.FirstStatment then
-		this.FirstStatment = this.__token
+	if not self.FirstStatment then
+		self.FirstStatment = self.__token
 	end
 
-	if this:CheckToken("cls") then
-		return this:ClassStatment_0()
+	if self:CheckToken("cls") then
+		return self:ClassStatment_0()
 	end
 
-	local stmt = this:Statment_1()
+	local stmt = self:Statment_1()
 
 	if dirLine and (not sep or direLine == stmt.line) then
-		this:Throw(stmt.token, "Statements must be separated by semicolon () or newline")
+		self:Throw(stmt.token, "Statements must be separated by semicolon () or newline")
 	end
 
 	return stmt
@@ -756,76 +756,76 @@ end
 
 --
 function PARSER.Statment_1(this)
-	if this:Accept("try") then
-		local inst = this:StartInstruction("try", this.__token)
+	if self:Accept("try") then
+		local inst = self:StartInstruction("try", self.__token)
 
-		inst.protected = this:Block_1(true, "function()")
+		inst.protected = self:Block_1(true, "function()")
 
-		this:Require("cth", "Catch expected after try statment, for try catch")
+		self:Require("cth", "Catch expected after try statment, for try catch")
 
-		inst.__catch = this.__token
+		inst.__catch = self.__token
 
-		this:Require("lpa", "Left parenthesis (( ) expected after catch.")
+		self:Require("lpa", "Left parenthesis (( ) expected after catch.")
 
-		inst.__lpa = this.__token
+		inst.__lpa = self.__token
 
-		this:Require("var", "Variable expected for error object, catch(variable)")
+		self:Require("var", "Variable expected for error object, catch(variable)")
 
-		inst.__var = this.__token
+		inst.__var = self.__token
 
-		this:Require("rpa", "Right parenthesis ( )) expected to end catch.")
+		self:Require("rpa", "Right parenthesis ( )) expected to end catch.")
 
-		inst.__rpa = this.__token
+		inst.__rpa = self.__token
 
-		inst.catch = this:Block_1(false, "then")
+		inst.catch = self:Block_1(false, "then")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_2()
+	return self:Statment_2()
 end
 
 function PARSER.Statment_2(this)
-	if this:Accept("if") then
-		local inst = this:StartInstruction("if", this.__token)
+	if self:Accept("if") then
+		local inst = self:StartInstruction("if", self.__token)
 
-		inst.condition = this:GetCondition()
+		inst.condition = self:GetCondition()
 		
-		inst.block = this:Block_1(false, "then")
+		inst.block = self:Block_1(false, "then")
 
-		inst._else = this:Statment_3()
+		inst._else = self:Statment_3()
 
-		this:QueueInjectionAfter(inst, this.__token, "end")
+		self:QueueInjectionAfter(inst, self.__token, "end")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_5()
+	return self:Statment_5()
 end
 
 function PARSER.Statment_3(this)
-	if this:Accept("eif") then
-		local inst = this:StartInstruction("elseif", this.__token)
+	if self:Accept("eif") then
+		local inst = self:StartInstruction("elseif", self.__token)
 
-		inst.condition = this:GetCondition()
+		inst.condition = self:GetCondition()
 
-		inst.block = this:Block_1(false, "then")
+		inst.block = self:Block_1(false, "then")
 
-		inst._else = this:Statment_3()
+		inst._else = self:Statment_3()
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_4()
+	return self:Statment_4()
 end
 
 function PARSER.Statment_4(this)
-	if this:Accept("els") then
-		local inst = this:StartInstruction("else", this.__token)
+	if self:Accept("els") then
+		local inst = self:StartInstruction("else", self.__token)
 
-		inst.block = this:Block_1(false, "")
+		inst.block = self:Block_1(false, "")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 end
 
@@ -834,421 +834,421 @@ end
 
 
 function PARSER.Statment_5(this)
-	if this:Accept("for") then
-		local inst = this:StartInstruction("for", this.__token)
+	if self:Accept("for") then
+		local inst = self:StartInstruction("for", self.__token)
 
-		this:Require("lpa", "Left parenthesis (( ) expected after for.")
+		self:Require("lpa", "Left parenthesis (( ) expected after for.")
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("typ", "Class expected for loop itorator")
+		self:Require("typ", "Class expected for loop itorator")
 
-		inst.class = this.__token.data
+		inst.class = self.__token.data
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("var", "Assigment expected for loop definition.")
+		self:Require("var", "Assigment expected for loop definition.")
 
-		inst.variable = this.__token
+		inst.variable = self.__token
 
-		this:Require("ass", "Assigment expected for loop definition.")
+		self:Require("ass", "Assigment expected for loop definition.")
 
-		inst.__ass = this.__token
+		inst.__ass = self.__token
 
 		local expressions = {}
 
-		expressions[1] = this:Expression_1()
+		expressions[1] = self:Expression_1()
 
-		this:Require("sep", "Seperator expected after loop decleration.")
+		self:Require("sep", "Seperator expected after loop decleration.")
 
-		this:QueueReplace(inst, this.__token, (","))
+		self:QueueReplace(inst, self.__token, (","))
 
-		inst.__sep1 = this.__token
+		inst.__sep1 = self.__token
 
-		expressions[2] = this:Expression_1()
+		expressions[2] = self:Expression_1()
 
-		if this:Accept("sep") then
-			this:QueueReplace(inst, this.__token, (","))
+		if self:Accept("sep") then
+			self:QueueReplace(inst, self.__token, (","))
 			
-			inst.__sep2 = this.__token
+			inst.__sep2 = self.__token
 
-			expressions[3] = this:Expression_1()
+			expressions[3] = self:Expression_1()
 		end
 
-		this:Require("rpa", "Right parenthesis ( )) expected to close cloop defintion.")
+		self:Require("rpa", "Right parenthesis ( )) expected to close cloop defintion.")
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		inst.stmts = this:Block_1(true, "do")
+		inst.stmts = self:Block_1(true, "do")
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 
-	return this:Statment_6()
+	return self:Statment_6()
 end
 
 function PARSER.Statment_6(this)
-	if this:Accept("sv") then
-		local inst = this:StartInstruction("server", this.__token)
+	if self:Accept("sv") then
+		local inst = self:StartInstruction("server", self.__token)
 
-		this:QueueInjectionBefore(inst, this.__token, "if")
+		self:QueueInjectionBefore(inst, self.__token, "if")
 
-		this:QueueReplace(inst, this.__token, "(SERVER)")
+		self:QueueReplace(inst, self.__token, "(SERVER)")
 
-		inst.block = this:Block_1(true, "then")
+		inst.block = self:Block_1(true, "then")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	if this:Accept("cl") then
-		local inst = this:StartInstruction("client", this.__token)
+	if self:Accept("cl") then
+		local inst = self:StartInstruction("client", self.__token)
 
-		this:QueueInjectionBefore(inst, this.__token, "if")
+		self:QueueInjectionBefore(inst, self.__token, "if")
 
-		this:QueueReplace(inst, this.__token, "(CLIENT)")
+		self:QueueReplace(inst, self.__token, "(CLIENT)")
 
-		inst.block = this:Block_1(true, "then")
+		inst.block = self:Block_1(true, "then")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_7()
+	return self:Statment_7()
 end
 
 --[[
 ]]
 
 function PARSER.Statment_7(this)
-	if this:Accept("glo") then
-		local inst = this:StartInstruction("global", this.__token)
+	if self:Accept("glo") then
+		local inst = self:StartInstruction("global", self.__token)
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("typ", "Class expected after global.")
+		self:Require("typ", "Class expected after global.")
 		
-		local type = this.__token.data
+		local type = self.__token.data
 
 		inst.class = type
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
 		local variables = {}
 
-		this:Require("var", "Variable('s) expected after class for global variable.")
-		variables[1] = this.__token
-		--this:QueueInjectionBefore(inst, this.__token, "GLOBAL", ".")
+		self:Require("var", "Variable('s) expected after class for global variable.")
+		variables[1] = self.__token
+		--self:QueueInjectionBefore(inst, self.__token, "GLOBAL", ".")
 
-		while this:Accept("com") do
-			this:Require("var", "Variable expected after comma (,).")
-			variables[#variables + 1] = this.__token
-			--this:QueueInjectionBefore(inst, this.__token, "GLOBAL", ".")
+		while self:Accept("com") do
+			self:Require("var", "Variable expected after comma (,).")
+			variables[#variables + 1] = self.__token
+			--self:QueueInjectionBefore(inst, self.__token, "GLOBAL", ".")
 		end
 
 		local expressions = {}
 
-		if this:Accept("ass") then
-			this:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
+		if self:Accept("ass") then
+			self:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
 			
-			expressions[1] = this:Expression_1()
+			expressions[1] = self:Expression_1()
 
-			while this:Accept("com") do
-				this:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
-				expressions[#expressions + 1] = this:Expression_1()
+			while self:Accept("com") do
+				self:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
+				expressions[#expressions + 1] = self:Expression_1()
 			end
 		end
 
 		inst.variables = variables
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 
-	if this:Accept("typ") then
-		local inst = this:StartInstruction("local", this.__token)
+	if self:Accept("typ") then
+		local inst = self:StartInstruction("local", self.__token)
 		
-		local type = this.__token.data
+		local type = self.__token.data
 
-		if type == "f" and this:CheckToken("typ") then
-			this:StepBackward(1)
-			return this:Statment_8()
+		if type == "f" and self:CheckToken("typ") then
+			self:StepBackward(1)
+			return self:Statment_8()
 		end
 
-		this:QueueReplace(inst, this.__token, "local")
+		self:QueueReplace(inst, self.__token, "local")
 
 		inst.class = type
 		
 		local variables = {}
 
-		this:Require("var", "Variable('s) expected after class for variable.")
-		variables[1] = this.__token
+		self:Require("var", "Variable('s) expected after class for variable.")
+		variables[1] = self.__token
 
-		while this:Accept("com") do
-			this:Require("var", "Variable expected after comma (,).")
-			variables[#variables + 1] = this.__token
+		while self:Accept("com") do
+			self:Require("var", "Variable expected after comma (,).")
+			variables[#variables + 1] = self.__token
 		end
 		
 		local expressions = {}
 
-		if this:Accept("ass") then
-			this:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
+		if self:Accept("ass") then
+			self:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
 			
-			expressions[1] = this:Expression_1()
+			expressions[1] = self:Expression_1()
 
-			while this:Accept("com") do
-				this:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
-				expressions[#expressions + 1] = this:Expression_1()
+			while self:Accept("com") do
+				self:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
+				expressions[#expressions + 1] = self:Expression_1()
 			end
 		end
 
 		inst.variables = variables
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 
-	return this:Statment_8()
+	return self:Statment_8()
 end
 
 function PARSER.Statment_8(this)
-	if this:Accept("var") then
+	if self:Accept("var") then
 		
-		if not this:CheckToken("com", "ass", "aadd", "asub", "adiv", "amul") then
-			this:StepBackward(1)
+		if not self:CheckToken("com", "ass", "aadd", "asub", "adiv", "amul") then
+			self:StepBackward(1)
 		else
-			local inst = this:StartInstruction("ass", this.__token)
+			local inst = self:StartInstruction("ass", self.__token)
 			
 			local variables = {}
 		
-			variables[1] = this.__token
+			variables[1] = self.__token
 
-			while this:Accept("com") do
-				this:Require("var", "Variable expected after comma (,).")
-				variables[#variables + 1] = this.__token
+			while self:Accept("com") do
+				self:Require("var", "Variable expected after comma (,).")
+				variables[#variables + 1] = self.__token
 			end
 			
 			inst.variables = variables
 
 			local expressions = {}
 
-			if this:Accept("ass") then
-				this:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
+			if self:Accept("ass") then
+				self:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
 				
-				expressions[1] = this:Expression_1()
+				expressions[1] = self:Expression_1()
 
-				while this:Accept("com") do
-					this:ExcludeWhiteSpace( "comma (,) must not be preceeded by whitespace." )
-					expressions[#expressions + 1] = this:Expression_1()
+				while self:Accept("com") do
+					self:ExcludeWhiteSpace( "comma (,) must not be preceeded by whitespace." )
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
-				return this:EndInstruction(inst, expressions)
+				return self:EndInstruction(inst, expressions)
 			end
 
-			if this:Accept("aadd", "asub", "amul", "adiv") then
-				inst.__operator = this.__token
+			if self:Accept("aadd", "asub", "amul", "adiv") then
+				inst.__operator = self.__token
 
-				inst.type = this.__token.type
+				inst.type = self.__token.type
 
-				this:ExcludeWhiteSpace("Assignment operator (%s), must not be preceded by whitespace.", this.__token.data)
+				self:ExcludeWhiteSpace("Assignment operator (%s), must not be preceded by whitespace.", self.__token.data)
 				
-				expressions[1] = this:Expression_1()
+				expressions[1] = self:Expression_1()
 
-				while this:Accept("com") do
-					this:ExcludeWhiteSpace( "comma (,) must not be preceeded by whitespace." )
-					expressions[#expressions + 1] = this:Expression_1()
+				while self:Accept("com") do
+					self:ExcludeWhiteSpace( "comma (,) must not be preceeded by whitespace." )
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
 				if #expressions ~= #variables then
 					-- TODO: Better error message.
-					this:ExcludeWhiteSpace("Invalid arithmetic assignment, not all variables are given values.")
+					self:ExcludeWhiteSpace("Invalid arithmetic assignment, not all variables are given values.")
 				end
 
-				return this:EndInstruction(inst, expressions)
+				return self:EndInstruction(inst, expressions)
 			end
 
-			this:Throw(inst.token, "Variable can not be preceded by whitespace.")
+			self:Throw(inst.token, "Variable can not be preceded by whitespace.")
 		end
 	end
 
-	return this:Statment_9()
+	return self:Statment_9()
 end
 
 function PARSER.Statment_8(this)
-	if this:Accept("del") then
-		local inst = this:StartInstruction("delegate", this.__token)
+	if self:Accept("del") then
+		local inst = self:StartInstruction("delegate", self.__token)
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 		
-		this:Require("typ", "Return class expected after delegate.")
+		self:Require("typ", "Return class expected after delegate.")
 
-		inst.resultClass = this.__token.data
+		inst.resultClass = self.__token.data
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("var", "Delegate name expected after delegate return class.")
+		self:Require("var", "Delegate name expected after delegate return class.")
 
-		inst.variable = this.__token.data
+		inst.variable = self.__token.data
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("lpa", "Left parenthesis (( ) expected to open delegate peramaters.")
+		self:Require("lpa", "Left parenthesis (( ) expected to open delegate peramaters.")
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
 		local classes = {}
 
-		if not this:CheckToken("rpa") then
+		if not self:CheckToken("rpa") then
 
 			while true do
-				this:Require("typ", "Peramater type expected for peramater.")
+				self:Require("typ", "Peramater type expected for peramater.")
 
-				this:QueueRemove(inst, this.__token)
+				self:QueueRemove(inst, self.__token)
 
-				classes[#classes + 1] = this.__token.data
+				classes[#classes + 1] = self.__token.data
 
-				if not this:Accept("com") then
+				if not self:Accept("com") then
 					break
 				end
 
-				this:QueueRemove(inst, this.__token)
+				self:QueueRemove(inst, self.__token)
 			end
 
 		end
 		
 		inst.peramaters = classes
 
-		this:Require("rpa", "Right parenthesis ( ) expected to close delegate peramaters.")
+		self:Require("rpa", "Right parenthesis ( ) expected to close delegate peramaters.")
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		local lcb = this:Accept("lcb")
+		local lcb = self:Accept("lcb")
 
 		if lcb then
-			this:QueueRemove(inst, this.__token)
+			self:QueueRemove(inst, self.__token)
 		end
 
-		this:Require("ret", "Delegate body must be return followed by return count")
+		self:Require("ret", "Delegate body must be return followed by return count")
 		
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("num", "Delegate body must be return followed by return count as number.")
+		self:Require("num", "Delegate body must be return followed by return count as number.")
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		inst.resultCount = this.__token.data
+		inst.resultCount = self.__token.data
 
-		if this:Accept("sep") then
-			this:QueueRemove(inst, this.__token)
+		if self:Accept("sep") then
+			self:QueueRemove(inst, self.__token)
 		end
 
 		if lcb then
-			this:Require("rcb", "Right curly bracket ( }) expected to close delegate.")
+			self:Require("rcb", "Right curly bracket ( }) expected to close delegate.")
 
-			this:QueueRemove(inst, this.__token)
+			self:QueueRemove(inst, self.__token)
 		end
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_10()
+	return self:Statment_10()
 end
 
 function PARSER.Statment_10(this)
-	if this:AcceptWithData("typ", "f") then
+	if self:AcceptWithData("typ", "f") then
 
-		local inst = this:StartInstruction("funct", this.__token)
+		local inst = self:StartInstruction("funct", self.__token)
 
-		this:QueueReplace(inst, this.__token, "function")
+		self:QueueReplace(inst, self.__token, "function")
 		
-		this:Require("typ", "Return class expected after user function.")
+		self:Require("typ", "Return class expected after user function.")
 
-		inst.resultClass = this.__token.data
+		inst.resultClass = self.__token.data
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		this:Require("var", "Function name expected after user function return class.")
+		self:Require("var", "Function name expected after user function return class.")
 
-		inst.variable = this.__token.data
+		inst.variable = self.__token.data
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
-		local perams, signature = this:InputPeramaters(inst)
+		local perams, signature = self:InputPeramaters(inst)
 		
 		inst.perams = perams
 		
 		inst.signature = signature
 
-		inst.stmts = this:Block_1(true, " ")
+		inst.stmts = self:Block_1(true, " ")
 
-		inst.__end = this.__token
+		inst.__end = self.__token
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Statment_11()
+	return self:Statment_11()
 end
 
 function PARSER.Statment_11(this)
-	if this:Accept("ret") then
+	if self:Accept("ret") then
 		local expressions = {}
-		local inst = this:StartInstruction("return", this.__token)
+		local inst = self:StartInstruction("return", self.__token)
 
-		if not this:CheckToken("sep", "rcb") then
+		if not self:CheckToken("sep", "rcb") then
 			while true do
-				expressions[#expressions + 1] = this:Expression_1()
+				expressions[#expressions + 1] = self:Expression_1()
 
-				if not this:HasTokens() then
+				if not self:HasTokens() then
 					break
 				end
 
-				if not this:Accept("com")) then --"sep", "rcb") then
+				if not self:Accept("com")) then --"sep", "rcb") then
 					break
 				end
 
-				-- this:Require("com", "Comma (,) expected to seperate return values.")
+				-- self:Require("com", "Comma (,) expected to seperate return values.")
 			end
 		end
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 
-	local expr = this:Expression_1()
+	local expr = self:Expression_1()
 
-	if expr and this:CheckToken("lsb") then
-		expr = this:Statment_12(expr)
+	if expr and self:CheckToken("lsb") then
+		expr = self:Statment_12(expr)
 	end
 
 	return expr
 end
 
-function PARSER.Statment_12(this, expr)
-	if this:Accept("lsb") then
-		local inst = this:StartInstruction("set", this.__token)
+function PARSER:Statment_12(expr)
+	if self:Accept("lsb") then
+		local inst = self:StartInstruction("set", self.__token)
 
-		inst.__lsb = this.__token
+		inst.__lsb = self.__token
 
 		local expressions = {}
 
 		expressions[1] = expr
 
-		expressions[2] = this:Expression_1()
+		expressions[2] = self:Expression_1()
 
-		if this:Accept("com") then
-			this:QueueRemove(inst, this.__token)
+		if self:Accept("com") then
+			self:QueueRemove(inst, self.__token)
 
-			this:Require("typ", "Class expected for index operator, after coma (,).")
+			self:Require("typ", "Class expected for index operator, after coma (,).")
 
-			inst.class = this.__token
+			inst.class = self.__token
 		end
 
-		this:Require("rsb", "Right square bracket (]) expected to close index operator.")
+		self:Require("rsb", "Right square bracket (]) expected to close index operator.")
 
-		inst.__rsb = this.__token
+		inst.__rsb = self.__token
 
-		this:Require("ass", "Assigment operator (=) expected after index operator.")
+		self:Require("ass", "Assigment operator (=) expected after index operator.")
 
-		inst.__ass = this.__token
+		inst.__ass = self.__token
 
-		expressions[3] = this:Expression_1()
+		expressions[3] = self:Expression_1()
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 end
 
@@ -1256,170 +1256,170 @@ end
 ]]
 
 function PARSER.Expression_1(this)
-	local expr = this:Expression_2()
+	local expr = self:Expression_2()
 
-	while this:Accept("qsm") do
-		local inst = this:StartInstruction("ten", this.__token)
+	while self:Accept("qsm") do
+		local inst = self:StartInstruction("ten", self.__token)
 
-		inst.__and = this.__token
+		inst.__and = self.__token
 
-		local expr2 = this:Expression_2()
+		local expr2 = self:Expression_2()
 
-		this:Require("col", "colon (:) expected for ternary operator.")
+		self:Require("col", "colon (:) expected for ternary operator.")
 
-		inst.__or = this.__token
+		inst.__or = self.__token
 
-		local expr3 = this:Expression_2()
+		local expr3 = self:Expression_2()
 
-		expr = this:EndInstruction(inst, {expr, expr2, expr3})
+		expr = self:EndInstruction(inst, {expr, expr2, expr3})
 	end
 
-	return this:Expression_Trailing(expr)
+	return self:Expression_Trailing(expr)
 end
 
 function PARSER.Expression_2(this)
-	local expr = this:Expression_3()
+	local expr = self:Expression_3()
 
-	while this:Accept("or") do
-		local inst = this:StartInstruction("or", expr.token)
+	while self:Accept("or") do
+		local inst = self:StartInstruction("or", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_3()
+		local expr2 = self:Expression_3()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_3(this)
-	local expr = this:Expression_4()
+	local expr = self:Expression_4()
 
-	while this:Accept("and") do
-		local inst = this:StartInstruction("and", expr.token)
+	while self:Accept("and") do
+		local inst = self:StartInstruction("and", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_4()
+		local expr2 = self:Expression_4()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_4(this)
-	local expr = this:Expression_5()
+	local expr = self:Expression_5()
 
-	while this:Accept("bxor") do
-		local inst = this:StartInstruction("bxor", expr.token)
+	while self:Accept("bxor") do
+		local inst = self:StartInstruction("bxor", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_5()
+		local expr2 = self:Expression_5()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_5(this)
-	local expr = this:Expression_6()
+	local expr = self:Expression_6()
 
-	while this:Accept("bor") do
-		local inst = this:StartInstruction("bor", expr.token)
+	while self:Accept("bor") do
+		local inst = self:StartInstruction("bor", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_6()
+		local expr2 = self:Expression_6()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_6(this)
-	local expr = this:Expression_7()
+	local expr = self:Expression_7()
 
-	while this:Accept("band") do
-		local inst = this:StartInstruction("band", expr.token)
+	while self:Accept("band") do
+		local inst = self:StartInstruction("band", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_7()
+		local expr2 = self:Expression_7()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_7(this)
-	local expr = this:Expression_8()
+	local expr = self:Expression_8()
 
-	while this:CheckToken("eq", "neq") do
-		if this:Accept("eq") then
-			local eqTkn = this.__token
+	while self:CheckToken("eq", "neq") do
+		if self:Accept("eq") then
+			local eqTkn = self.__token
 
-			if this:Accept("lsb") then
-				local inst = this:StartInstruction("eq_mul", expr.token)
+			if self:Accept("lsb") then
+				local inst = self:StartInstruction("eq_mul", expr.token)
 				
 				inst.__operator = eqTkn
 
-				inst.__listStart = this.__token
+				inst.__listStart = self.__token
 
 				local expressions = {}
 
 				expressions[1] = expr
 
-				expressions[2] = this:Expression_1()
+				expressions[2] = self:Expression_1()
 
-				while this:Accept("com") do
-					expressions[#expressions + 1] = this:Expression_1()
+				while self:Accept("com") do
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
-				expr = this:EndInstruction(ist, expressions)
+				expr = self:EndInstruction(ist, expressions)
 			else
-				local inst = this:StartInstruction("eq", this.__token)
+				local inst = self:StartInstruction("eq", self.__token)
 
-				inst.__operator = this.__token
+				inst.__operator = self.__token
 
-				local expr2 = this:Expression_8()
+				local expr2 = self:Expression_8()
 
-				expr = this:EndInstruction(inst, {expr, expr2})
+				expr = self:EndInstruction(inst, {expr, expr2})
 			end
-		elseif this:Accept("neq") then
-			local eqTkn = this.__token
+		elseif self:Accept("neq") then
+			local eqTkn = self.__token
 
-			if this:Accept("lsb") then
-				local inst = this:StartInstruction("neq_mul", expr.token)
+			if self:Accept("lsb") then
+				local inst = self:StartInstruction("neq_mul", expr.token)
 				
 				inst.__operator = eqTkn
 
-				inst.__listStart = this.__token
+				inst.__listStart = self.__token
 
 				local expressions = {}
 
 				expressions[1] = expr
 
-				expressions[2] = this:Expression_1()
+				expressions[2] = self:Expression_1()
 
-				while this:Accept("com") do
-					expressions[#expressions + 1] = this:Expression_1()
+				while self:Accept("com") do
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
-				expr = this:EndInstruction(inst, expressions)
+				expr = self:EndInstruction(inst, expressions)
 			else
-				local inst = this:StartInstruction("neq", this.__token)
+				local inst = self:StartInstruction("neq", self.__token)
 
-				inst.__operator = this.__token
+				inst.__operator = self.__token
 
-				local expr2 = this:Expression_8()
+				local expr2 = self:Expression_8()
 
-				expr = this:EndInstruction(ist, {expr, expr2})
+				expr = self:EndInstruction(ist, {expr, expr2})
 			end
 		end
 	end
@@ -1428,41 +1428,41 @@ function PARSER.Expression_7(this)
 end
 
 function PARSER.Expression_8(this)
-	local expr = this:Expression_9()
+	local expr = self:Expression_9()
 
-	while this:CheckToken("lth", "leq", "gth", "geq") do
-		if this:Accept("lth") then
-			local inst = this:StartInstruction("lth", expr.token)
+	while self:CheckToken("lth", "leq", "gth", "geq") do
+		if self:Accept("lth") then
+			local inst = self:StartInstruction("lth", expr.token)
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			local expr2 = this:Expression_1()
+			local expr2 = self:Expression_1()
 
-			expr = this:EndInstruction(inst, {expr, expr2})
-		elseif this:Accept("leq") then
-			local inst = this:StartInstruction("leq", expr.token)
+			expr = self:EndInstruction(inst, {expr, expr2})
+		elseif self:Accept("leq") then
+			local inst = self:StartInstruction("leq", expr.token)
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			local expr2 = this:Expression_1()
+			local expr2 = self:Expression_1()
 
-			expr = this:EndInstruction(inst, {expr, expr2})
-		elseif this:Accept("gth") then
-			local inst = this:StartInstruction("gth", expr.token)
+			expr = self:EndInstruction(inst, {expr, expr2})
+		elseif self:Accept("gth") then
+			local inst = self:StartInstruction("gth", expr.token)
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			local expr2 = this:Expression_1()
+			local expr2 = self:Expression_1()
 
-			expr = this:EndInstruction(inst, {expr, expr2})
-		elseif this:Accept("geq") then
-			local inst = this:StartInstruction("geq", expr.token)
+			expr = self:EndInstruction(inst, {expr, expr2})
+		elseif self:Accept("geq") then
+			local inst = self:StartInstruction("geq", expr.token)
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			local expr2 = this:Expression_1()
+			local expr2 = self:Expression_1()
 
-			expr = this:EndInstruction(inst, {expr, expr2})
+			expr = self:EndInstruction(inst, {expr, expr2})
 		end
 	end
 
@@ -1470,80 +1470,80 @@ function PARSER.Expression_8(this)
 end
 
 function PARSER.Expression_9(this)
-	local expr = this:Expression_10()
+	local expr = self:Expression_10()
 
-	while this:Accept("bshl") do
-		local inst = this:StartInstruction("bshl", expr.token)
+	while self:Accept("bshl") do
+		local inst = self:StartInstruction("bshl", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_10()
+		local expr2 = self:Expression_10()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_10(this)
-	local expr = this:Expression_11()
+	local expr = self:Expression_11()
 
-	while this:Accept("bshr") do
-		local inst = this:StartInstruction("bshr", expr.token)
+	while self:Accept("bshr") do
+		local inst = self:StartInstruction("bshr", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_11()
+		local expr2 = self:Expression_11()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_11(this)
-	local expr = this:Expression_12()
+	local expr = self:Expression_12()
 
-	while this:Accept("add") do
-		local inst = this:StartInstruction("add", expr.token)
+	while self:Accept("add") do
+		local inst = self:StartInstruction("add", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_12()
+		local expr2 = self:Expression_12()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_12(this)
-	local expr = this:Expression_13()
+	local expr = self:Expression_13()
 
-	while this:Accept("sub") do
-		local inst = this:StartInstruction("sub", expr.token)
+	while self:Accept("sub") do
+		local inst = self:StartInstruction("sub", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_13()
+		local expr2 = self:Expression_13()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_13(this)
-	local expr = this:Expression_14()
+	local expr = self:Expression_14()
 
-	while this:Accept("div") do
-		local inst = this:StartInstruction("div", expr.token)
+	while self:Accept("div") do
+		local inst = self:StartInstruction("div", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_14()
+		local expr2 = self:Expression_14()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
@@ -1551,405 +1551,405 @@ end
 
 function PARSER.Expression_14(this)
 
-	local expr = this:Expression_15()
+	local expr = self:Expression_15()
 
-	while this:Accept("mul") do
-		local inst = this:StartInstruction("mul", expr.token)
+	while self:Accept("mul") do
+		local inst = self:StartInstruction("mul", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_15()
+		local expr2 = self:Expression_15()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_15(this)
-	local expr = this:Expression_16()
+	local expr = self:Expression_16()
 
-	while this:Accept("exp") do
-		local inst = this:StartInstruction("exp", expr.token)
+	while self:Accept("exp") do
+		local inst = self:StartInstruction("exp", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_16()
+		local expr2 = self:Expression_16()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_16(this)
-	local expr = this:Expression_17()
+	local expr = self:Expression_17()
 
-	while this:Accept("mod") do
-		local inst = this:StartInstruction("mod", expr.token)
+	while self:Accept("mod") do
+		local inst = self:StartInstruction("mod", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		local expr2 = this:Expression_17()
+		local expr2 = self:Expression_17()
 
-		expr = this:EndInstruction(inst, {expr, expr2})
+		expr = self:EndInstruction(inst, {expr, expr2})
 	end
 
 	return expr
 end
 
 function PARSER.Expression_17(this)
-	if this:Accept("add") then
-		local tkn = this.__token
+	if self:Accept("add") then
+		local tkn = self.__token
 
-		this:ExcludeWhiteSpace("Identity operator (+) must not be succeeded by whitespace")
+		self:ExcludeWhiteSpace("Identity operator (+) must not be succeeded by whitespace")
 
-		local expr = this:Expression_18()
+		local expr = self:Expression_18()
 
-		this:QueueRemove(expr, tkn)
+		self:QueueRemove(expr, tkn)
 
 		return expr
 	end
 
-	return this:Expression_18()
+	return self:Expression_18()
 end
 
 function PARSER.Expression_18(this)
-	if this:Accept("neg") then
-		local inst = this:StartInstruction("neg", expr.token)
+	if self:Accept("neg") then
+		local inst = self:StartInstruction("neg", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		this:ExcludeWhiteSpace("Negation operator (-) must not be succeeded by whitespace")
+		self:ExcludeWhiteSpace("Negation operator (-) must not be succeeded by whitespace")
 
-		local expr = this:Expression_23()
+		local expr = self:Expression_23()
 
-		return this:EndInstruction(inst, {expr})
+		return self:EndInstruction(inst, {expr})
 	end
 
-	return this:Expression_19()
+	return self:Expression_19()
 end
 
 function PARSER.Expression_19(this)
-	if this:Accept("neg") then
-		local inst = this:StartInstruction("not", expr.token)
+	if self:Accept("neg") then
+		local inst = self:StartInstruction("not", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		this:ExcludeWhiteSpace("Not operator (!) must not be succeeded by whitespace")
+		self:ExcludeWhiteSpace("Not operator (!) must not be succeeded by whitespace")
 
-		local expr = this:Expression_23()
+		local expr = self:Expression_23()
 
-		return this:EndInstruction(inst, {expr})
+		return self:EndInstruction(inst, {expr})
 	end
 
-	return this:Expression_20()
+	return self:Expression_20()
 end
 
 function PARSER.Expression_20(this)
-	if this:Accept("len") then
-		local inst = this:StartInstruction("len", expr.token)
+	if self:Accept("len") then
+		local inst = self:StartInstruction("len", expr.token)
 
-		inst.__operator = this.__token
+		inst.__operator = self.__token
 
-		this:ExcludeWhiteSpace("Length operator (#) must not be succeeded by whitespace")
+		self:ExcludeWhiteSpace("Length operator (#) must not be succeeded by whitespace")
 
-		local expr = this:Expression_23()
+		local expr = self:Expression_23()
 
-		return this:EndInstruction(inst, {expr})
+		return self:EndInstruction(inst, {expr})
 	end
 
-	return this:Expression_21()
+	return self:Expression_21()
 end
 
 function PARSER.Expression_21(this)
-	if this:Accept("cst") then
-		local inst = this:StartInstruction("cast", expr.token)
+	if self:Accept("cst") then
+		local inst = self:StartInstruction("cast", expr.token)
 		
-		inst.class = this.__token.data
+		inst.class = self.__token.data
 
-		this:ExcludeWhiteSpace("Cast operator ( (%s) ) must not be succeeded by whitespace", inst.type)
+		self:ExcludeWhiteSpace("Cast operator ( (%s) ) must not be succeeded by whitespace", inst.type)
 
-		local expr = this:Expression_1()
+		local expr = self:Expression_1()
 
-		return this:EndInstruction(inst, {expr})
+		return self:EndInstruction(inst, {expr})
 	end
 
-	return this:Expression_22()
+	return self:Expression_22()
 end
 
 function PARSER.Expression_22(this)
-	if this:Accept("lpa") then
-		local expr = this:Expression_1()
+	if self:Accept("lpa") then
+		local expr = self:Expression_1()
 
-		this:Require("rpa", "Right parenthesis ( )) missing, to close grouped equation.")
+		self:Require("rpa", "Right parenthesis ( )) missing, to close grouped equation.")
 
 		return expr
 	end
 
-	return this:Expression_23()
+	return self:Expression_23()
 end
 
 function PARSER.Expression_23(this)
-	if this:CheckToken("var") then
-		local token = this.__token
-		local library = this.__next.data
+	if self:CheckToken("var") then
+		local token = self.__token
+		local library = self.__next.data
 		local lib = EXPR_LIBRARIES[library]
 
 		if lib then
-			this:Next()
+			self:Next()
 
-			local inst = this:StartInstruction("func", token)
+			local inst = self:StartInstruction("func", token)
 
-			inst.library = this.__token
+			inst.library = self.__token
 
-			if not this:Accept("prd") then
-				this:StepBackward(1)
-				return this:Expression_24()
+			if not self:Accept("prd") then
+				self:StepBackward(1)
+				return self:Expression_24()
 			end
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			this:Require("var", "function expected after library name")
+			self:Require("var", "function expected after library name")
 			
-			inst.__func = this.__token
+			inst.__func = self.__token
 
-			inst.name = this.__token.data
+			inst.name = self.__token.data
 
-			this:Require("lpa", "Left parenthesis (( ) expected to open function parameters.")
+			self:Require("lpa", "Left parenthesis (( ) expected to open function parameters.")
 
-			inst.__lpa = this.__token
+			inst.__lpa = self.__token
 			
 			local expressions = {}
 
-			if not this:CheckToken("rpa") then
-				expressions[1] = this:Expression_1()
+			if not self:CheckToken("rpa") then
+				expressions[1] = self:Expression_1()
 
-				while(this:Accept("com")) do
-					this:Exclude("rpa", "Expression or value expected after comma (,).")
+				while(self:Accept("com")) do
+					self:Exclude("rpa", "Expression or value expected after comma (,).")
 
-					expressions[#expressions + 1] = this:Expression_1()
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
 			end  
 			
-			this:Require("rpa", "Right parenthesis ( )) expected to close function parameters.")
+			self:Require("rpa", "Right parenthesis ( )) expected to close function parameters.")
 
-			return this:EndInstruction(inst, expressions)
+			return self:EndInstruction(inst, expressions)
 		end
 	end
 
-	return this:Expression_24()
+	return self:Expression_24()
 end
 
 function PARSER.Expression_24(this)
-	if this:Accept("var") then
-		local inst = this:StartInstruction("var", this.__token)
+	if self:Accept("var") then
+		local inst = self:StartInstruction("var", self.__token)
 
-		inst.variable = this.__token.data
+		inst.variable = self.__token.data
 
-		this:EndInstruction(inst, {})
+		self:EndInstruction(inst, {})
 
-		return this:Expression_Trailing(inst)
+		return self:Expression_Trailing(inst)
 	end
 
-	return this:Expression_25()
+	return self:Expression_25()
 end
 
 function PARSER.Expression_25(this)
 
-	if this:Accept("new") then
-		local inst = this:StartInstruction("new", this.__token)
+	if self:Accept("new") then
+		local inst = self:StartInstruction("new", self.__token)
 
-		inst.__new = this.__token -- this:QueueRemove(inst, this.__token)
+		inst.__new = self.__token -- self:QueueRemove(inst, self.__token)
 
-		this:Require("typ", "Type expected after new for constructor.")
+		self:Require("typ", "Type expected after new for constructor.")
 
-		inst.class = this.__token.data
+		inst.class = self.__token.data
 
-		inst.__const = this.__token -- this:QueueRemove(inst, this.__token)
+		inst.__const = self.__token -- self:QueueRemove(inst, self.__token)
 		
-		this:Require("lpa", "Left parenthesis (( ) expected to open constructor parameters.")
+		self:Require("lpa", "Left parenthesis (( ) expected to open constructor parameters.")
 		
-		inst.__lpa = this.__token
+		inst.__lpa = self.__token
 
 		local expressions = {}
 
-		if not this:CheckToken("rpa") then
-			expressions[1] = this:Expression_1()
+		if not self:CheckToken("rpa") then
+			expressions[1] = self:Expression_1()
 
-			while(this:Accept("com")) do
-				this:Exclude("rpa", "Expression or value expected after comma (,).")
+			while(self:Accept("com")) do
+				self:Exclude("rpa", "Expression or value expected after comma (,).")
 
-				expressions[#expressions + 1] = this:Expression_1()
+				expressions[#expressions + 1] = self:Expression_1()
 			end
 
 		end
 
-		this:Require("rpa", "Right parenthesis ( )) expected to close constructor parameters.")
+		self:Require("rpa", "Right parenthesis ( )) expected to close constructor parameters.")
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 
-	return this:Expression_26()
+	return self:Expression_26()
 end
 
 function PARSER.Expression_26(this)
-	if this:AcceptWithData("typ", "f") then
-		local inst = this:StartInstruction("lambda", this.__token)
+	if self:AcceptWithData("typ", "f") then
+		local inst = self:StartInstruction("lambda", self.__token)
 
-		this:QueueInjectionBefore(inst, this.__token, "{op = ")
+		self:QueueInjectionBefore(inst, self.__token, "{op = ")
 
-		this:QueueReplace(inst, this.__token, "function")
+		self:QueueReplace(inst, self.__token, "function")
 
-		local perams, signature = this:InputPeramaters(inst)
+		local perams, signature = self:InputPeramaters(inst)
 
 		inst.perams = perams
 		
 		inst.signature = signature
 
-		inst.stmts = this:Block_1(true, " ")
+		inst.stmts = self:Block_1(true, " ")
 
-		this:QueueInjectionAfter(inst, this.__token, ", signature = \"" .. signature .. "\"")
+		self:QueueInjectionAfter(inst, self.__token, ", signature = \"" .. signature .. "\"")
 		
-		inst.__end = this.__token
+		inst.__end = self.__token
 		-- We inject the } in the compiler.
-		-- this:QueueInjectionAfter(inst, this.__token, "}")
+		-- self:QueueInjectionAfter(inst, self.__token, "}")
 
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
 	end
 
-	return this:Expression_27()
+	return self:Expression_27()
 end
 
-function PARSER.InputPeramaters(this, inst)
-	this:Require("lpa", "Left parenthesis (() ) expected to open function parameters.")
+function PARSER:InputPeramaters(inst)
+	self:Require("lpa", "Left parenthesis (() ) expected to open function parameters.")
 
 	local signature = {}
 
 	local perams = {}
 
-	if not this:CheckToken("rpa") then
+	if not self:CheckToken("rpa") then
 		while true do
-			this:Require("typ", "Class expected for new peramater.")
+			self:Require("typ", "Class expected for new peramater.")
 
-			this:QueueRemove(inst, this.__token)
+			self:QueueRemove(inst, self.__token)
 
-			local class = this.__token.data
+			local class = self.__token.data
 
-			this:Require("var", "Peramater expected after class.")
+			self:Require("var", "Peramater expected after class.")
 
 			signature[#signature + 1] = class
 
-			perams[#perams + 1] = {class, this.__token.data}
+			perams[#perams + 1] = {class, self.__token.data}
 
-			if this:CheckToken("rpa") then
+			if self:CheckToken("rpa") then
 				break
 			end
 
-			if not this:HasTokens() then
+			if not self:HasTokens() then
 				break
 			end
 
-			this:Require("com", "Right parenthesis ( )) expected to close function parameters.")
+			self:Require("com", "Right parenthesis ( )) expected to close function parameters.")
 			-- May not look logical, but it is :D
 		end
 	end
 
-	this:Require("rpa", "Right parenthesis ( )) expected to close function parameters.")
+	self:Require("rpa", "Right parenthesis ( )) expected to close function parameters.")
 
 	return perams, table.concat(signature, ",")
 end
 
 function PARSER.Expression_27(this)
-	expr = this:Expression_28()
+	expr = self:Expression_28()
 
 	if expr then
 		return expr
 	end
 
-	this:ExpressionErr()
+	self:ExpressionErr()
 end
 
 function PARSER.Expression_28(this)
-	if this:Accept("tre", "fls") then
-		local inst = this:StartInstruction("bool", this.__token)
-		inst.value = this.__token.data
-		return this:EndInstruction(inst, {})
-	elseif this:Accept("void") then
-		local inst = this:StartInstruction("void", this.__token)
+	if self:Accept("tre", "fls") then
+		local inst = self:StartInstruction("bool", self.__token)
+		inst.value = self.__token.data
+		return self:EndInstruction(inst, {})
+	elseif self:Accept("void") then
+		local inst = self:StartInstruction("void", self.__token)
 		
-		this:QueueReplace(this.__token, "nil")
+		self:QueueReplace(self.__token, "nil")
 		
-		return this:EndInstruction(inst, {})
-	elseif this:Accept("num") then
-		local inst = this:StartInstruction("num", this.__token)
-		inst.value = this.__token.data
-		return this:EndInstruction(inst, {})
-	elseif this:Accept("str") then
-		local inst = this:StartInstruction("str", this.__token)
-		inst.value = this.__token.data
-		return this:EndInstruction(inst, {})
-	elseif this:Accept("ptr") then
-		local inst = this:StartInstruction("ptrn", this.__token)
-		inst.value = this.__token.data
-		return this:EndInstruction(inst, {})
-	elseif this:Accept("typ") then
-		local inst = this:StartInstruction("cls", this.__token)
-		inst.value = this.__token.data
-		return this:EndInstruction(inst, {})
+		return self:EndInstruction(inst, {})
+	elseif self:Accept("num") then
+		local inst = self:StartInstruction("num", self.__token)
+		inst.value = self.__token.data
+		return self:EndInstruction(inst, {})
+	elseif self:Accept("str") then
+		local inst = self:StartInstruction("str", self.__token)
+		inst.value = self.__token.data
+		return self:EndInstruction(inst, {})
+	elseif self:Accept("ptr") then
+		local inst = self:StartInstruction("ptrn", self.__token)
+		inst.value = self.__token.data
+		return self:EndInstruction(inst, {})
+	elseif self:Accept("typ") then
+		local inst = self:StartInstruction("cls", self.__token)
+		inst.value = self.__token.data
+		return self:EndInstruction(inst, {})
 	end
 end
 
-function PARSER.Expression_Trailing(this, expr)
+function PARSER:Expression_Trailing(expr)
 
-	while this:CheckToken("prd", "lsb", "lpa") do
+	while self:CheckToken("prd", "lsb", "lpa") do
 		
 		local excluded
 
-		if this:StatmentContains(this.__token, "ass") then
-			excluded = this:LastInStatment(this.__token, "lsb")
+		if self:StatmentContains(self.__token, "ass") then
+			excluded = self:LastInStatment(self.__token, "lsb")
 		end
 
 		-- Methods
-		if this:Accept("prd") then
-			this.__prd = this.__token
+		if self:Accept("prd") then
+			self.__prd = self.__token
 
-			local inst = this:StartInstruction("meth", expr.token)
+			local inst = self:StartInstruction("meth", expr.token)
 
-			inst.__operator = this.__token
+			inst.__operator = self.__token
 
-			this:Require("var", "method name expected after method operator (.)")
+			self:Require("var", "method name expected after method operator (.)")
 
-			local varToken = this.__token
+			local varToken = self.__token
 
-			--this:Require("lpa", "Left parenthesis (( ) expected to open method parameters.")
+			--self:Require("lpa", "Left parenthesis (( ) expected to open method parameters.")
 
-			if this:Accept("lpa") then
-				inst.__lpa = this.__token
+			if self:Accept("lpa") then
+				inst.__lpa = self.__token
 
 				local expressions = {}
 	 
 				expressions[1] = expr
 
-				if not this:CheckToken("rpa") then
-					expressions[2] = this:Expression_1()
+				if not self:CheckToken("rpa") then
+					expressions[2] = self:Expression_1()
 
-					while(this:Accept("com")) do
-						this:Exclude("rpa", "Expression or value expected after comma (,).")
+					while(self:Accept("com")) do
+						self:Exclude("rpa", "Expression or value expected after comma (,).")
 
-						expressions[#expressions + 1] = this:Expression_1()
+						expressions[#expressions + 1] = self:Expression_1()
 					end
 
 				end  
 
-				this:Require("rpa", "Right parenthesis ( )) expected to close method parameters.")
+				self:Require("rpa", "Right parenthesis ( )) expected to close method parameters.")
 
-				inst.__rpa = this.__token
+				inst.__rpa = self.__token
 				inst.__method = varToken
 				inst.method = varToken.data
 
-				expr = this:EndInstruction(inst, {expr})
+				expr = self:EndInstruction(inst, {expr})
 			else
 				inst.type = "feild"
 
@@ -1957,66 +1957,66 @@ function PARSER.Expression_Trailing(this, expr)
 				inst.__method = nil
 				inst.__feild = varToken
 
-				expr = this:EndInstruction(inst, {expr})
+				expr = self:EndInstruction(inst, {expr})
 			end
-		elseif this:Accept("lsb") then
-			local lsb = this.__token
+		elseif self:Accept("lsb") then
+			local lsb = self.__token
 
 			-- Check for a set instruction and locate it,
 			-- If we are at our set indexer then we break.
 
-			if this:StatmentContains(this.__token, "ass") then
-				local excluded = this:LastInStatment(this.__token, "lsb")
+			if self:StatmentContains(self.__token, "ass") then
+				local excluded = self:LastInStatment(self.__token, "lsb")
 
-				if excluded and excluded.index == this.__token.index then
-					this:StepBackward(1)
+				if excluded and excluded.index == self.__token.index then
+					self:StepBackward(1)
 					break
 				end
 			end
 
-			local inst = this:StartInstruction("get", expr.token)
+			local inst = self:StartInstruction("get", expr.token)
 
 			local expressions = {}
  
 			expressions[1] = expr
 
-			expressions[2] = this:Expression_1()
+			expressions[2] = self:Expression_1()
 
-			if this:Accept("com") then
+			if self:Accept("com") then
 
-				this:Require("typ", "Class expected for index operator, after coma (,).")
+				self:Require("typ", "Class expected for index operator, after coma (,).")
 
-				inst.class = this.__token
+				inst.class = self.__token
 			end
 
-			this:Require("rsb", "Right square bracket (]) expected to close index operator.")
+			self:Require("rsb", "Right square bracket (]) expected to close index operator.")
 
 			inst.__lsb = lsb
-			inst.__rsb = this.__token
+			inst.__rsb = self.__token
 
-			expr = this:EndInstruction(inst, expressions)
-		elseif this:Accept("lpa") then
-			local inst = this:StartInstruction("call", expr.token)
+			expr = self:EndInstruction(inst, expressions)
+		elseif self:Accept("lpa") then
+			local inst = self:StartInstruction("call", expr.token)
 
-			this:QueueRemove(inst, this.__token)
+			self:QueueRemove(inst, self.__token)
 			local expressions = {}
  
 			expressions[1] = expr
 
-			if not this:CheckToken("rpa") then
-				expressions[2] = this:Expression_1()
+			if not self:CheckToken("rpa") then
+				expressions[2] = self:Expression_1()
 
-				while this:Accept("com") do
-					this:Exclude("rpa", "Expression or value expected after comma (,).")
+				while self:Accept("com") do
+					self:Exclude("rpa", "Expression or value expected after comma (,).")
 
-					expressions[#expressions + 1] = this:Expression_1()
+					expressions[#expressions + 1] = self:Expression_1()
 				end
 
 			end  
 
-			this:Require("rpa", "Right parenthesis ( )) expected to close call parameters.")
+			self:Require("rpa", "Right parenthesis ( )) expected to close call parameters.")
 
-			expr = this:EndInstruction(inst, expressions)
+			expr = self:EndInstruction(inst, expressions)
 		end
 	end
 	
@@ -2024,135 +2024,135 @@ function PARSER.Expression_Trailing(this, expr)
 end
 
 function PARSER.GetCondition(this)
-	this:Require("lpa", "Left parenthesis ( () required, to open condition.")
+	self:Require("lpa", "Left parenthesis ( () required, to open condition.")
 	
-	local inst = this:StartInstruction("cond", this.__token)
+	local inst = self:StartInstruction("cond", self.__token)
 	
-	local expr = this:Expression_1()
+	local expr = self:Expression_1()
 
-	this:Require("rpa", "Right parenthesis ( )) missing, to close condition.")
+	self:Require("rpa", "Right parenthesis ( )) missing, to close condition.")
 	
-	return this:EndInstruction(inst, {expr})
+	return self:EndInstruction(inst, {expr})
 end
 
 function PARSER.ExpressionErr(this)
-	if not this.__token then
-		this:Throw(this.__tokens[#this.__tokens], "Further input required at end of code, incomplete expression")
+	if not self.__token then
+		self:Throw(self.__tokens[#self.__tokens], "Further input required at end of code, incomplete expression")
 	end
 
-	this:ExcludeWhiteSpace("Further input required at end of code, incomplete expression")
-	this:Exclude("void", "void must not appear inside an equation")
-	this:Exclude("add", "Arithmetic operator (+) must be preceded by equation or value")
-	this:Exclude("sub", "Arithmetic operator (-) must be preceded by equation or value")
-	this:Exclude("mul", "Arithmetic operator (*) must be preceded by equation or value")
-	this:Exclude("div", "Arithmetic operator (/) must be preceded by equation or value")
-	this:Exclude("mod", "Arithmetic operator (%) must be preceded by equation or value")
-	this:Exclude("exp", "Arithmetic operator (^) must be preceded by equation or value")
-	this:Exclude("ass", "Assignment operator (=) must be preceded by variable")
-	this:Exclude("aadd", "Assignment operator (+=) must be preceded by variable")
-	this:Exclude("asub", "Assignment operator (-=) must be preceded by variable")
-	this:Exclude("amul", "Assignment operator (*=) must be preceded by variable")
-	this:Exclude("adiv", "Assignment operator (/=) must be preceded by variable")
-	this:Exclude("and", "Logical operator (&&) must be preceded by equation or value")
-	this:Exclude("or", "Logical operator (||) must be preceded by equation or value")
-	this:Exclude("eq", "Comparison operator (==) must be preceded by equation or value")
-	this:Exclude("neq", "Comparison operator (!=) must be preceded by equation or value")
-	this:Exclude("gth", "Comparison operator (>=) must be preceded by equation or value")
-	this:Exclude("lth", "Comparison operator (<=) must be preceded by equation or value")
-	this:Exclude("geq", "Comparison operator (>) must be preceded by equation or value")
-	this:Exclude("leq", "Comparison operator (<) must be preceded by equation or value")
-	-- this:Exclude("inc", "Increment operator (++) must be preceded by variable")
-	-- this:Exclude("dec", "Decrement operator (--) must be preceded by variable")
-	this:Exclude("rpa", "Right parenthesis ( )) without matching left parenthesis")
-	this:Exclude("lcb", "Left curly bracket ({) must be part of an table/if/while/for-statement block")
-	this:Exclude("rcb", "Right curly bracket (}) without matching left curly bracket")
-	this:Exclude("lsb", "Left square bracket ([) must be preceded by variable")
-	this:Exclude("rsb", "Right square bracket (]) without matching left square bracket")
-	this:Exclude("com", "Comma (,) not expected here, missing an argument?")
-	this:Exclude("prd", "Method operator (.) must not be preceded by white space")
-	this:Exclude("col", "Ternary operator (:) must be part of conditional expression (A ? B : C).")
-	this:Exclude("if", "If keyword (if) must not appear inside an equation")
-	this:Exclude("eif", "Else-if keyword (elseif) must be part of an if-statement")
-	this:Exclude("els", "Else keyword (else) must be part of an if-statement")
-	--this:Exclude("try", "Try keyword (try) must be part of a try-statement")
-	--this:Exclude("cth", "Catch keyword (catch) must be part of an try-statement")
-	--this:Exclude("fnl", "Final keyword (final) must be part of an try-statement")
-	this:Exclude("dir", "directive operator (@) must not appear inside an equation")
+	self:ExcludeWhiteSpace("Further input required at end of code, incomplete expression")
+	self:Exclude("void", "void must not appear inside an equation")
+	self:Exclude("add", "Arithmetic operator (+) must be preceded by equation or value")
+	self:Exclude("sub", "Arithmetic operator (-) must be preceded by equation or value")
+	self:Exclude("mul", "Arithmetic operator (*) must be preceded by equation or value")
+	self:Exclude("div", "Arithmetic operator (/) must be preceded by equation or value")
+	self:Exclude("mod", "Arithmetic operator (%) must be preceded by equation or value")
+	self:Exclude("exp", "Arithmetic operator (^) must be preceded by equation or value")
+	self:Exclude("ass", "Assignment operator (=) must be preceded by variable")
+	self:Exclude("aadd", "Assignment operator (+=) must be preceded by variable")
+	self:Exclude("asub", "Assignment operator (-=) must be preceded by variable")
+	self:Exclude("amul", "Assignment operator (*=) must be preceded by variable")
+	self:Exclude("adiv", "Assignment operator (/=) must be preceded by variable")
+	self:Exclude("and", "Logical operator (&&) must be preceded by equation or value")
+	self:Exclude("or", "Logical operator (||) must be preceded by equation or value")
+	self:Exclude("eq", "Comparison operator (==) must be preceded by equation or value")
+	self:Exclude("neq", "Comparison operator (!=) must be preceded by equation or value")
+	self:Exclude("gth", "Comparison operator (>=) must be preceded by equation or value")
+	self:Exclude("lth", "Comparison operator (<=) must be preceded by equation or value")
+	self:Exclude("geq", "Comparison operator (>) must be preceded by equation or value")
+	self:Exclude("leq", "Comparison operator (<) must be preceded by equation or value")
+	-- self:Exclude("inc", "Increment operator (++) must be preceded by variable")
+	-- self:Exclude("dec", "Decrement operator (--) must be preceded by variable")
+	self:Exclude("rpa", "Right parenthesis ( )) without matching left parenthesis")
+	self:Exclude("lcb", "Left curly bracket ({) must be part of an table/if/while/for-statement block")
+	self:Exclude("rcb", "Right curly bracket (}) without matching left curly bracket")
+	self:Exclude("lsb", "Left square bracket ([) must be preceded by variable")
+	self:Exclude("rsb", "Right square bracket (]) without matching left square bracket")
+	self:Exclude("com", "Comma (,) not expected here, missing an argument?")
+	self:Exclude("prd", "Method operator (.) must not be preceded by white space")
+	self:Exclude("col", "Ternary operator (:) must be part of conditional expression (A ? B : C).")
+	self:Exclude("if", "If keyword (if) must not appear inside an equation")
+	self:Exclude("eif", "Else-if keyword (elseif) must be part of an if-statement")
+	self:Exclude("els", "Else keyword (else) must be part of an if-statement")
+	--self:Exclude("try", "Try keyword (try) must be part of a try-statement")
+	--self:Exclude("cth", "Catch keyword (catch) must be part of an try-statement")
+	--self:Exclude("fnl", "Final keyword (final) must be part of an try-statement")
+	self:Exclude("dir", "directive operator (@) must not appear inside an equation")
 
-	this:Throw(this.__token, "Unexpected symbol found (%s)", this.__token.type)
+	self:Throw(self.__token, "Unexpected symbol found (%s)", self.__token.type)
 end
 
 --[[
 ]]
 
 function PARSER.ClassStatment_0(this)
-	if this:Accept("cls") then
-		local inst = this:StartInstruction("class", this.__token)
+	if self:Accept("cls") then
+		local inst = self:StartInstruction("class", self.__token)
 
-		this:Require("var", "Class anme expected after class")
-		inst.__classname = this.__token
+		self:Require("var", "Class anme expected after class")
+		inst.__classname = self.__token
 	
-		this:Require("lcb", "Left curly bracket (}) expected, to open class")
-		inst.__lcb = this.__token
+		self:Require("lcb", "Left curly bracket (}) expected, to open class")
+		inst.__lcb = self.__token
 		
 		local stmts = {}
 
-		if not this:CheckToken("rcb") then
-			this.__scope = this.__scope + 1
+		if not self:CheckToken("rcb") then
+			self.__scope = self.__scope + 1
 
-			stmts = this:Statments(true, this.ClassStatment_1)
+			stmts = self:Statments(true, self.ClassStatment_1)
 
-			this.__scope = this.__scope - 1
+			self.__scope = self.__scope - 1
 		end
 
-		this:Require("rcb", "Right curly bracket (}) missing, to close class")
-		inst.__rcb = this.__token
+		self:Require("rcb", "Right curly bracket (}) missing, to close class")
+		inst.__rcb = self.__token
 
-		return this:EndInstruction(inst, stmts)
+		return self:EndInstruction(inst, stmts)
 	end
 end
 
 function PARSER.ClassStatment_1(this)
-	if this:Accept("typ") then
-		local inst = this:StartInstruction("def_feild", this.__token)
+	if self:Accept("typ") then
+		local inst = self:StartInstruction("def_feild", self.__token)
 		
-		local type = this.__token.data
+		local type = self.__token.data
 
-		if type == "f" and this:CheckToken("typ") then
-			this:StepBackward(1)
-			return this:Statment_8()
+		if type == "f" and self:CheckToken("typ") then
+			self:StepBackward(1)
+			return self:Statment_8()
 		end
 
-		this:QueueRemove(inst, this.__token)
+		self:QueueRemove(inst, self.__token)
 
 		inst.class = type
 		
 		local variables = {}
 
-		this:Require("var", "Variable('s) expected after class for variable.")
-		variables[1] = this.__token
+		self:Require("var", "Variable('s) expected after class for variable.")
+		variables[1] = self.__token
 
-		while this:Accept("com") do
-			this:Require("var", "Variable expected after comma (,).")
-			variables[#variables + 1] = this.__token
+		while self:Accept("com") do
+			self:Require("var", "Variable expected after comma (,).")
+			variables[#variables + 1] = self.__token
 		end
 		
 		local expressions = {}
 
-		if this:Accept("ass") then
-			this:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
+		if self:Accept("ass") then
+			self:ExcludeWhiteSpace( "Assignment operator (=), must not be preceded by whitespace." )
 			
-			expressions[1] = this:Expression_1()
+			expressions[1] = self:Expression_1()
 
-			while this:Accept("com") do
-				this:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
-				expressions[#expressions + 1] = this:Expression_1()
+			while self:Accept("com") do
+				self:ExcludeWhiteSpace( "comma (,) must not be preceded by whitespace." )
+				expressions[#expressions + 1] = self:Expression_1()
 			end
 		end
 
 		inst.variables = variables
 
-		return this:EndInstruction(inst, expressions)
+		return self:EndInstruction(inst, expressions)
 	end
 end
 

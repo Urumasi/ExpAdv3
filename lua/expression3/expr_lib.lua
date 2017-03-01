@@ -661,78 +661,78 @@ function EXPR_LIB.GetExtensionMetatable()
 end
 
 function Extension.SetServerState(this)
-	this.state = EXPR_SERVER
+	self.state = EXPR_SERVER
 end
 
 function Extension.SetSharedState(this)
-	this.state = EXPR_SHARED
+	self.state = EXPR_SHARED
 end
 
 function Extension.SetClientState(this)
-	this.state = EXPR_CLIENT
+	self.state = EXPR_CLIENT
 end
 
-function Extension.RegisterClass(this, id, name, isType, isValid)
-	local entry = {id, name, isType, isValid, this.state}
-	this.classes[#this.classes + 1] = entry
+function Extension:RegisterClass(id, name, isType, isValid)
+	local entry = {id, name, isType, isValid, self.state}
+	self.classes[#self.classes + 1] = entry
 end
 
-function Extension.RegisterExtendedClass(this, id, name, base, isType, isValid)
-	local entry = {[0] = base, id, name, isType, isValid, this.state}
-	this.classes[#this.classes + 1] = entry
+function Extension:RegisterExtendedClass(id, name, base, isType, isValid)
+	local entry = {[0] = base, id, name, isType, isValid, self.state}
+	self.classes[#self.classes + 1] = entry
 end
 
-function Extension.RegisterWiredInport(this, class, wiretype, func)
+function Extension:RegisterWiredInport(class, wiretype, func)
 	hook.Add("Expression3.LoadConstructors", "Expression3.WireInput." .. class, function()
-		if this.enabled then
+		if self.enabled then
 			EXPR_LIB.RegisterWiredInport(class, wiretype, func)
 		end
 	end)
 end
 
-function Extension.RegisterWiredOutport(this, class, wiretype, func)
+function Extension:RegisterWiredOutport(class, wiretype, func)
 	hook.Add("Expression3.LoadConstructors", "Expression3.WireOutput." .. class, function()
-		if this.enabled then
+		if self.enabled then
 			EXPR_LIB.RegisterWiredOutport(class, wiretype, func)
 		end
 	end)
 end
 
-function Extension.RegisterConstructor(this, class, parameter, constructor, excludeContext)
-	local entry = {class, parameter, constructor, excludeContext, this.state}
-	this.constructors[#this.constructors + 1] = entry
+function Extension:RegisterConstructor(class, parameter, constructor, excludeContext)
+	local entry = {class, parameter, constructor, excludeContext, self.state}
+	self.constructors[#self.constructors + 1] = entry
 end
 
-function Extension.RegisterMethod(this, class, name, parameter, type, count, method, excludeContext)
-	local entry = {class, name, parameter, type, count, method, excludeContext, this.state}
-	this.methods[#this.methods + 1] = entry
+function Extension:RegisterMethod(class, name, parameter, type, count, method, excludeContext)
+	local entry = {class, name, parameter, type, count, method, excludeContext, self.state}
+	self.methods[#self.methods + 1] = entry
 end
 
-function Extension.RegisterOperator(this, operation, parameter, type, count, operator, excludeContext)
-	local entry = {operation, parameter, type, count, operator, excludeContext, this.state}
-	this.operators[#this.operators + 1] = entry
+function Extension:RegisterOperator(operation, parameter, type, count, operator, excludeContext)
+	local entry = {operation, parameter, type, count, operator, excludeContext, self.state}
+	self.operators[#self.operators + 1] = entry
 end
 
-function Extension.RegisterCastingOperator(this, type, parameter, operator, excludeContext)
-	local entry = {type, parameter, operator, excludeContext, this.state}
-	this.castOperators[#this.castOperators + 1] = entry
+function Extension:RegisterCastingOperator(type, parameter, operator, excludeContext)
+	local entry = {type, parameter, operator, excludeContext, self.state}
+	self.castOperators[#self.castOperators + 1] = entry
 end
 
-function Extension.RegisterLibrary(this, name)
+function Extension:RegisterLibrary(name)
 	local entry = {name, name}
-	this.libraries[#this.libraries + 1] = entry
+	self.libraries[#self.libraries + 1] = entry
 end
 
-function Extension.RegisterFunction(this, library, name, parameter, type, count, _function, excludeContext)
-	local entry = {library, name, parameter, type, count, _function, excludeContext, this.state}
-	this.functions[#this.functions + 1] = entry
+function Extension:RegisterFunction(library, name, parameter, type, count, _function, excludeContext)
+	local entry = {library, name, parameter, type, count, _function, excludeContext, self.state}
+	self.functions[#self.functions + 1] = entry
 end
 
-function Extension.CheckRegistration(this, _function, ...)
+function Extension:CheckRegistration(_function, ...)
 	local state, err = pcall(_function, ...)
 
 	if not state then
-		EXPR_LIB.ThrowInternal(0, "%s in component %s", err, this.name)
+		EXPR_LIB.ThrowInternal(0, "%s in component %s", err, self.name)
 	end
 
 	return err
@@ -744,21 +744,21 @@ end
 local enabledExtentions = {}
 
 function Extension.EnableExtension(this)
-	this.enabled = true
+	self.enabled = true
 
 	local classes = {}
 
-	hook.Add("Expression3.LoadClasses", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.classes) do
+	hook.Add("Expression3.LoadClasses", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.classes) do
 			STATE = v[5]
 
 			if not v[0] then
-				local op = this:CheckRegistration(EXPR_LIB.RegisterClass, v[1], v[2], v[3], v[4])
-				op.extension = this.name
+				local op = self:CheckRegistration(EXPR_LIB.RegisterClass, v[1], v[2], v[3], v[4])
+				op.extension = self.name
 				classes[op.id] = op
 			else
-				local op = this:CheckRegistration(EXPR_LIB.RegisterExtendedClass, v[1], v[2], v[0], v[3], v[4])
-				op.extension = this.name
+				local op = self:CheckRegistration(EXPR_LIB.RegisterExtendedClass, v[1], v[2], v[0], v[3], v[4])
+				op.extension = self.name
 				classes[op.id] = op
 			end
 		end
@@ -766,72 +766,72 @@ function Extension.EnableExtension(this)
 
 	local constructors = {}
 
-	hook.Add("Expression3.LoadConstructors", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.constructors) do
+	hook.Add("Expression3.LoadConstructors", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.constructors) do
 			STATE = v[5]
-			local op = this:CheckRegistration(EXPR_LIB.RegisterConstructor, v[1], v[2], v[3], v[4])
-			op.extension = this.name
+			local op = self:CheckRegistration(EXPR_LIB.RegisterConstructor, v[1], v[2], v[3], v[4])
+			op.extension = self.name
 			constructors[op.signature] = op
 		end
 
-		this:PostLoadClasses(EXPR_LIB.GetAllClasses())
+		self:PostLoadClasses(EXPR_LIB.GetAllClasses())
 	end)
 	
 	local methods = {}
 
-	hook.Add("Expression3.LoadMethods", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.methods) do
+	hook.Add("Expression3.LoadMethods", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.methods) do
 			STATE = v[8]
-			local op = this:CheckRegistration(EXPR_LIB.RegisterMethod, v[1], v[2], v[3], v[4], v[5], v[6], v[7])
-			op.extension = this.name
+			local op = self:CheckRegistration(EXPR_LIB.RegisterMethod, v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+			op.extension = self.name
 			methods[op.signature] = op
 		end
 	end)
 
 	local operators = {}
 
-	hook.Add("Expression3.LoadOperators", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.operators) do
+	hook.Add("Expression3.LoadOperators", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.operators) do
 			STATE = v[7]
-			local op = this:CheckRegistration(EXPR_LIB.RegisterOperator, v[1], v[2], v[3], v[4], v[5], v[6])
-			op.extension = this.name
+			local op = self:CheckRegistration(EXPR_LIB.RegisterOperator, v[1], v[2], v[3], v[4], v[5], v[6])
+			op.extension = self.name
 			operators[op.signature] = op
 		end
 
-		for _, v in pairs(this.castOperators) do
+		for _, v in pairs(self.castOperators) do
 			STATE = v[5]
-			local op = this:CheckRegistration(EXPR_LIB.RegisterCastingOperator, v[1], v[2], v[3], v[4])
-			op.extension = this.name
+			local op = self:CheckRegistration(EXPR_LIB.RegisterCastingOperator, v[1], v[2], v[3], v[4])
+			op.extension = self.name
 			operators[op.signature] = op
 		end
 	end)
 
-	hook.Add("Expression3.LoadLibraries", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.libraries) do
-			this:CheckRegistration(EXPR_LIB.RegisterLibrary, v[1])
+	hook.Add("Expression3.LoadLibraries", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.libraries) do
+			self:CheckRegistration(EXPR_LIB.RegisterLibrary, v[1])
 		end
 	end)
 
 	local functions = {}
 
-	hook.Add("Expression3.LoadFunctions", "Expression3.Extension." .. this.name, function()
-		for _, v in pairs(this.functions) do
+	hook.Add("Expression3.LoadFunctions", "Expression3.Extension." .. self.name, function()
+		for _, v in pairs(self.functions) do
 			STATE = v[8]
-			local op = this:CheckRegistration(EXPR_LIB.RegisterFunction, v[1], v[2], v[3], v[4], v[5], v[6], v[7])
-			op.extension = this.name
+			local op = self:CheckRegistration(EXPR_LIB.RegisterFunction, v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+			op.extension = self.name
 			functions[op.signature] = op
 		end
 	end)
 
-	hook.Add("Expression3.BuildExtensionData","Expression3.Extension." .. this.name, function()
-		this.classes = classes
-		this.constructors = constructors
-		this.methods = methods
-		this.operators = operators
-		this.functions = functions
-		enabledExtentions[this.name] = this
+	hook.Add("Expression3.BuildExtensionData","Expression3.Extension." .. self.name, function()
+		self.classes = classes
+		self.constructors = constructors
+		self.methods = methods
+		self.operators = operators
+		self.functions = functions
+		enabledExtentions[self.name] = this
 
-		MsgN("Registered extention: ", this.name)
+		MsgN("Registered extention: ", self.name)
 	end)
 end
 

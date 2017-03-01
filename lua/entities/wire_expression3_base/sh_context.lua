@@ -20,7 +20,7 @@ CONTEXT.__index = CONTEXT
 	Error messages and tracing.
 ]]
 
-function CONTEXT.Trace(this, level, max)
+function CONTEXT:Trace(level, max)
 	local stack = {}
 
 	for i = level + 1, level + max do
@@ -31,7 +31,7 @@ function CONTEXT.Trace(this, level, max)
 		end
 
 		if info.short_src == "Expression 3" then
-			local trace = this:GetScriptPos(info.currentline, 0)
+			local trace = self:GetScriptPos(info.currentline, 0)
 
 			if trace then
 				trace.level = #stack + 1
@@ -43,8 +43,8 @@ function CONTEXT.Trace(this, level, max)
 	return stack
 end
 
-function CONTEXT.GetScriptPos(this, line, char)
-	for _, a in pairs(this.traceTable) do
+function CONTEXT:GetScriptPos(line, char)
+	for _, a in pairs(self.traceTable) do
 		if a.native_line >= line then
 			return{a.e3_line, a.e3_char}
 		end
@@ -53,7 +53,7 @@ function CONTEXT.GetScriptPos(this, line, char)
 	return nil
 end
 
-function CONTEXT.Throw(this, msg, fst, ...)
+function CONTEXT:Throw(msg, fst, ...)
 	if fst then
 		msg = string.format(msg, fst, ...)
 	end
@@ -64,7 +64,7 @@ function CONTEXT.Throw(this, msg, fst, ...)
 	err.line = 0
 	err.msg = msg
 
-	err.stack = this:Trace(1, 15)
+	err.stack = self:Trace(1, 15)
 
 	if err.stack then
 		local trace = err.stack[1]

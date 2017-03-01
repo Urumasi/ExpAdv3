@@ -38,35 +38,35 @@ function COMPILER.New()
 	return setmetatable({}, COMPILER)
 end
 
-function COMPILER.Initalize(this, instance)
-	this.__tokens = instance.tokens
-	this.__tasks = instance.tasks
-	this.__root = instance.instruction
-	this.__script = instance.script
-	this.__directives = instance.directives
+function COMPILER:Initalize(instance)
+	self.__tokens = instance.tokens
+	self.__tasks = instance.tasks
+	self.__root = instance.instruction
+	self.__script = instance.script
+	self.__directives = instance.directives
 
-	this.__scope = {}
-	this.__scopeID = 0
-	this.__scopeData = {}
-	this.__scopeData[0] = this.__scope
+	self.__scope = {}
+	self.__scopeID = 0
+	self.__scopeData = {}
+	self.__scopeData[0] = self.__scope
 
-	this.__scope.memory = {}
-	this.__scope.classes = {}
-	this.__scope.server = true
-	this.__scope.client = true
+	self.__scope.memory = {}
+	self.__scope.classes = {}
+	self.__scope.server = true
+	self.__scope.client = true
 
-	this.__defined = {}
+	self.__defined = {}
 
-	this.__constructors = {}
-	this.__operators = {}
-	this.__functions = {}
-	this.__methods = {}
-	this.__enviroment = {}
+	self.__constructors = {}
+	self.__operators = {}
+	self.__functions = {}
+	self.__methods = {}
+	self.__enviroment = {}
 end
 
-function COMPILER.Run(this)
+function COMPILER:Run()
 	--TODO: PcallX for stack traces on internal errors?
-	local status, result = pcall(this._Run, this)
+	local status, result = pcall(self._Run, self)
 
 	if status then
 		return true, result
@@ -83,38 +83,38 @@ function COMPILER.Run(this)
 	return false, err
 end
 
-function COMPILER._Run(this)
-	this:SetOption("state", EXPR_SHARED)
+function COMPILER:_Run()
+	self:SetOption("state", EXPR_SHARED)
 
-	this:Compile(this.__root)
+	self:Compile(self.__root)
 
-	local script, traceTbl = this:BuildScript()
+	local script, traceTbl = self:BuildScript()
 
 	local result = {}
-	result.script = this.__script
+	result.script = self.__script
 	result.compiled = script
-	result.constructors = this.__constructors
-	result.operators = this.__operators
-	result.functions = this.__functions
-	result.methods = this.__methods
-	result.enviroment = this.__enviroment
-	result.directives = this.__directives
+	result.constructors = self.__constructors
+	result.operators = self.__operators
+	result.functions = self.__functions
+	result.methods = self.__methods
+	result.enviroment = self.__enviroment
+	result.directives = self.__directives
 	result.traceTbl = traceTbl
 	
 	return result
 end
 
-function COMPILER.BuildScript(this)
+function COMPILER:BuildScript()
 	-- This will probably become a separate stage (post compiler?).
 
 	local buffer = {}
-	local alltasks = this.__tasks
+	local alltasks = self.__tasks
 
 	local char = 0
 	local line = 3
 	local traceTable = {}
 
-	for k, v in pairs(this.__tokens) do
+	for k, v in pairs(self.__tokens) do
 		local data = tostring(v.data)
 
 		if v.newLine then
@@ -185,7 +185,7 @@ function COMPILER.BuildScript(this)
 	return table.concat(buffer, " "), traceTable
 end
 
-function COMPILER.Throw(this, token, msg, fst, ...)
+function COMPILER:Throw(token, msg, fst, ...)
 	local err = {}
 
 	if fst then
@@ -203,10 +203,10 @@ end
 --[[
 ]]
 
-function COMPILER.OffsetToken(this, token, offset)
+function COMPILER:OffsetToken(token, offset)
 	local pos = token.index + offset
 
-	local token = this.__tokens[pos]
+	local token = self.__tokens[pos]
 
 	return token
 end
@@ -214,9 +214,9 @@ end
 --[[
 ]]
 
-function COMPILER.Import(this, path)
+function COMPILER:Import(path)
 	local g = _G
-	local e = this.__enviroment
+	local e = self.__enviroment
 	local a = string.Explode(".", path)
 	
 	if #a > 1 then
@@ -246,43 +246,43 @@ end
 --[[
 ]]
 
-function COMPILER.PushScope(this)
-	this.__scope = {}
-	this.__scope.memory = {}
-	this.__scope.classes = {}
-	this.__scopeID = this.__scopeID + 1
-	this.__scopeData[this.__scopeID] = this.__scope
+function COMPILER:PushScope()
+	self.__scope = {}
+	self.__scope.memory = {}
+	self.__scope.classes = {}
+	self.__scopeID = self.__scopeID + 1
+	self.__scopeData[self.__scopeID] = self.__scope
 end
 
-function COMPILER.PopScope(this)
-	this.__scopeData[this.__scopeID] = nil
-	this.__scopeID = this.__scopeID - 1
-	this.__scope = this.__scopeData[this.__scopeID]
+function COMPILER:PopScope()
+	self.__scopeData[self.__scopeID] = nil
+	self.__scopeID = self.__scopeID - 1
+	self.__scope = self.__scopeData[self.__scopeID]
 end
 
-function COMPILER.SetOption(this, option, value, deep)
+function COMPILER:SetOption(option, value, deep)
 	if not deep then
-		this.__scope[option] = value
+		self.__scope[option] = value
 	else
-		for i = this.__scopeID, 0, -1 do
-			local v = this.__scopeData[i][option]
+		for i = self.__scopeID, 0, -1 do
+			local v = self.__scopeData[i][option]
 
 			if v then
-				this.__scopeData[i][option] = value
+				self.__scopeData[i][option] = value
 				break
 			end
 		end
 	end
 end
 
-function COMPILER.GetOption(this, option, nonDeep)
-	if this.__scope[option] then
-		return this.__scope[option]
+function COMPILER:GetOption(option, nonDeep)
+	if self.__scope[option] then
+		return self.__scope[option]
 	end
 
 	if not nonDeep then
-		for i = this.__scopeID, 0, -1 do
-			local v = this.__scopeData[i][option]
+		for i = self.__scopeID, 0, -1 do
+			local v = self.__scopeData[i][option]
 
 			if v then
 				return v
@@ -291,26 +291,26 @@ function COMPILER.GetOption(this, option, nonDeep)
 	end
 end
 
-function COMPILER.SetVariable(this, name, class, scope)
+function COMPILER:SetVariable(name, class, scope)
 	if not scope then
-		scope = this.__scopeID
+		scope = self.__scopeID
 	end
 
 	local var = {}
 	var.name = name
 	var.class = class
 	var.scope = scope
-	this.__scopeData[scope].memory[name] = var
+	self.__scopeData[scope].memory[name] = var
 
 	return class, scope, var
 end
 
-function COMPILER.GetVariable(this, name, scope, nonDeep)
+function COMPILER:GetVariable(name, scope, nonDeep)
 	if not scope then
-		scope = this.__scopeID
+		scope = self.__scopeID
 	end
 
-	local v = this.__scopeData[scope].memory[name]
+	local v = self.__scopeData[scope].memory[name]
 
 	if v then
 		return v.class, v.scope, v
@@ -318,7 +318,7 @@ function COMPILER.GetVariable(this, name, scope, nonDeep)
 
 	if not nonDeep then
 		for i = scope, 0, -1 do
-			local v = this.__scopeData[i].memory[name]
+			local v = self.__scopeData[i].memory[name]
 
 			if v then
 				return v.class, v.scope, v
@@ -339,30 +339,30 @@ local bannedVars = {
 	["invoke"] = true,
 }
 
-function COMPILER.AssignVariable(this, token, declaired, varName, class, scope)
+function COMPILER:AssignVariable(token, declaired, varName, class, scope)
 	if bannedVars[varName] then
-		this:Throw(token, "Unable to declare variable %s, name is reserved internally.", varName)
+		self:Throw(token, "Unable to declare variable %s, name is reserved internally.", varName)
 	end
 
 	if not scope then
-		scope = this.__scopeID
+		scope = self.__scopeID
 	end
 
-	local c, s, var = this:GetVariable(varName, scope, declaired)
+	local c, s, var = self:GetVariable(varName, scope, declaired)
 
 	if declaired then
 		if c and c == class then
-			this:Throw(token, "Unable to declare variable %s, Variable already exists.", varName)
+			self:Throw(token, "Unable to declare variable %s, Variable already exists.", varName)
 		elseif c then
-			this:Throw(token, "Unable to initalize variable %s, %s expected got %s.", varName, name(c), name(class))
+			self:Throw(token, "Unable to initalize variable %s, %s expected got %s.", varName, name(c), name(class))
 		else
-			return this:SetVariable(varName, class, scope)
+			return self:SetVariable(varName, class, scope)
 		end
 	else
 		if not c then
-			this:Throw(token, "Unable to assign variable %s, Variable doesn't exist.", varName)
+			self:Throw(token, "Unable to assign variable %s, Variable doesn't exist.", varName)
 		elseif c ~= class then
-			this:Throw(token, "Unable to assign variable %s, %s expected got %s.", varName, name(c), name(class))
+			self:Throw(token, "Unable to assign variable %s, %s expected got %s.", varName, name(c), name(class))
 		end
 	end
 
@@ -372,7 +372,7 @@ end
 --[[
 ]]
 
-function COMPILER.GetOperator(this, operation, fst, ...)
+function COMPILER:GetOperator(operation, fst, ...)
 	if not fst then
 		return EXPR_OPERATORS[operation .. "()"]
 	end
@@ -391,17 +391,17 @@ end
 --[[
 ]]
 
-function COMPILER.QueueReplace(this, inst, token, str)
+function COMPILER:QueueReplace(inst, token, str)
 	local op = {}
 	op.token = token
 	op.str = str
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	tasks.replace = op
@@ -409,17 +409,17 @@ function COMPILER.QueueReplace(this, inst, token, str)
 	return op
 end
 
-function COMPILER.QueueRemove(this, inst, token)
+function COMPILER:QueueRemove(inst, token)
 	local op = {}
 
 	op.token = token
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	tasks.remove = op
@@ -429,13 +429,13 @@ end
 
 local injectNewLine = false
 
-function COMPILER.QueueInjectionBefore(this, inst, token, str, ...)
+function COMPILER:QueueInjectionBefore(inst, token, str, ...)
 	
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	if not tasks.prefix then
@@ -462,18 +462,18 @@ function COMPILER.QueueInjectionBefore(this, inst, token, str, ...)
 	return r
 end
 
-function COMPILER.QueueInjectionAfter(this, inst, token, str, ...)
+function COMPILER:QueueInjectionAfter(inst, token, str, ...)
 	local op = {}
 	
 	op.token = token
 	op.str = str
 	op.inst = inst
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	if not tasks.postfix then
@@ -504,17 +504,17 @@ end
 --[[
 ]]
 
-function COMPILER.QueueInstruction(this, inst, inst, token, inst, type)
+function COMPILER:QueueInstruction(inst, inst, token, inst, type) -- What the hell are these arguments
 	local op = {}
 	op.token = token
 	op.inst = inst
 	op.type = type
 
-	local tasks = this.__tasks[token.pos]
+	local tasks = self.__tasks[token.pos]
 
 	if not tasks then
 		tasks = {}
-		this.__tasks[token.pos] = tasks
+		self.__tasks[token.pos] = tasks
 	end
 
 	if not tasks.instruction then
@@ -524,7 +524,7 @@ function COMPILER.QueueInstruction(this, inst, inst, token, inst, type)
 	return op
 end
 
-function COMPILER.Compile(this, inst)
+function COMPILER:Compile(inst)
 	if not inst then
 		debug.Trace()
 		error("Compiler was asked to compile a nil instruction.")
@@ -537,17 +537,17 @@ function COMPILER.Compile(this, inst)
 
 	if not inst.compiled then
 		local instruction = string.upper(inst.type)
-		local fun = this["Compile_" .. instruction]
+		local fun = self["Compile_" .. instruction]
 
 		-- print("Compiler->" .. instruction .. "->#" .. #inst.instructions)
 
 		if not fun then
-			this:Throw(inst.token, "Failed to compile unknown instruction %s", instruction)
+			self:Throw(inst.token, "Failed to compile unknown instruction %s", instruction)
 		end
 
-		--this:QueueInstruction(inst, inst.token, inst.type)
+		--self:QueueInstruction(inst, inst.token, inst.type)
 
-		local type, count = fun(this, inst, inst.token, inst.instructions)
+		local type, count = fun(self, inst, inst.token, inst.instructions)
 
 		if type then
 			inst.result = type
@@ -567,76 +567,76 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_SEQ(this, inst, token, stmts)
+function COMPILER:Compile_SEQ(inst, token, stmts)
 	for i = 1, #stmts do
-		this:Compile(stmts[i])
+		self:Compile(stmts[i])
 	end
 
 	return "", 0
 end
 
-function COMPILER.Compile_IF(this, inst, token)
-	local r, c = this:Compile(inst.condition)
+function COMPILER:Compile_IF(inst, token)
+	local r, c = self:Compile(inst.condition)
 	
 	if class ~= "b" then
-		local isBool = this:Expression_IS(inst.condition)
+		local isBool = self:Expression_IS(inst.condition)
 
 		if not isBool then
-			local t = this:CastExpression("b", inst.condition)
+			local t = self:CastExpression("b", inst.condition)
 
 			if not t then
-				this:Throw(token, "Type of %s can not be used as a condition.", name(r))
+				self:Throw(token, "Type of %s can not be used as a condition.", name(r))
 			end
 		end
 	end
 
-	this:PushScope()
+	self:PushScope()
 
-	this:Compile(inst.block)
+	self:Compile(inst.block)
 	
-	this:PopScope()
+	self:PopScope()
 
 	if inst._else then
-		this:Compile(inst._else)
+		self:Compile(inst._else)
 	end
 
 	return "", 0
 end
 
-function COMPILER.Compile_ELSEIF(this, inst, token)
-	local class, count = this:Compile(inst.condition)
+function COMPILER:Compile_ELSEIF(inst, token)
+	local class, count = self:Compile(inst.condition)
 	
 	if class ~= "b" then
-		local isBool = this:Expression_IS(inst.condition)
+		local isBool = self:Expression_IS(inst.condition)
 
 		if not isBool then
-			local t = this:CastExpression("b", inst.condition)
+			local t = self:CastExpression("b", inst.condition)
 
 			if not t then
-				this:Throw(token, "Type of %s can not be used as a condition.", name(r))
+				self:Throw(token, "Type of %s can not be used as a condition.", name(r))
 			end
 		end
 	end
 
-	this:PushScope()
+	self:PushScope()
 
-	this:Compile(inst.block)
+	self:Compile(inst.block)
 	
-	this:PopScope()
+	self:PopScope()
 
 	if inst._else then
-		this:Compile(inst._else)
+		self:Compile(inst._else)
 	end
 
 	return "", 0
 end
 
-function COMPILER.Compile_ELSE(this, inst, token)
-	this:PushScope()
+function COMPILER:Compile_ELSE(inst, token)
+	self:PushScope()
 
-	this:Compile(inst.block)
+	self:Compile(inst.block)
 	
-	this:PopScope()
+	self:PopScope()
 
 	return "", 0
 end
@@ -644,8 +644,8 @@ end
 --[[
 ]]
 
-function COMPILER.CheckState(this, state, token, msg, frst, ...)
-	local s = this:GetOption("state")
+function COMPILER:CheckState(state, token, msg, frst, ...)
+	local s = self:GetOption("state")
 	
 	if state == EXPR_SHARED or s == state then
 		return true
@@ -657,39 +657,39 @@ function COMPILER.CheckState(this, state, token, msg, frst, ...)
 		end
 
 		if state == EXPR_SERVER then
-			this:Throw(token, "%s is server-side only.", msg)
+			self:Throw(token, "%s is server-side only.", msg)
 		elseif state == EXPR_SERVER then
-			this:Throw(token, "%s is client-side only.", msg)
+			self:Throw(token, "%s is client-side only.", msg)
 		end 
 	end
 
 	return false
 end
 
-function COMPILER.Compile_SERVER(this, inst, token)
-	if not this:GetOption("server") then
-		this:Throw(token, "Server block must not appear inside a Client block.")
+function COMPILER:Compile_SERVER(inst, token)
+	if not self:GetOption("server") then
+		self:Throw(token, "Server block must not appear inside a Client block.")
 	end
 
-	this:PushScope()
-	this:SetOption("state", EXPR_SERVER)
-	this:Compile(inst.block)
+	self:PushScope()
+	self:SetOption("state", EXPR_SERVER)
+	self:Compile(inst.block)
 	
-	this:PopScope()
+	self:PopScope()
 
 	return "", 0
 end
 
-function COMPILER.Compile_CLIENT(this, inst, token)
-	if not this:GetOption("client") then
-		this:Throw(token, "Client block must not appear inside a Server block.")
+function COMPILER:Compile_CLIENT(inst, token)
+	if not self:GetOption("client") then
+		self:Throw(token, "Client block must not appear inside a Server block.")
 	end
 
-	this:PushScope()
-	this:SetOption("state", EXPR_CLIENT)
-	this:Compile(inst.block)
+	self:PushScope()
+	self:SetOption("state", EXPR_CLIENT)
+	self:Compile(inst.block)
 	
-	this:PopScope()
+	self:PopScope()
 
 	return "", 0
 end
@@ -697,17 +697,17 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_GLOBAL(this, inst, token, expressions)
+function COMPILER:Compile_GLOBAL(inst, token, expressions)
 	local tArgs = #expressions
 
 	local results = {}
 
 	for i = 1, tArgs do
 		local arg = expressions[i]
-		local r, c = this:Compile(arg)
+		local r, c = self:Compile(arg)
 
 		if not inst.variables[i] then
-			this:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
+			self:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
 		elseif i < tArgs then
 			results[#results + 1] = {r, arg, true}
 		else
@@ -723,17 +723,17 @@ function COMPILER.Compile_GLOBAL(this, inst, token, expressions)
 		local var = token.data
 
 		if not result then
-			this:Throw(token, "Unable to assign variable %s, no matching value.", var)
+			self:Throw(token, "Unable to assign variable %s, no matching value.", var)
 		end
 
-		local class, scope, info = this:AssignVariable(token, true, var, inst.class, 0)
+		local class, scope, info = self:AssignVariable(token, true, var, inst.class, 0)
 
 		if info then
 			info.prefix = "GLOBAL"
-			this:QueueReplace(inst, token, info.prefix .. "." .. var)
+			self:QueueReplace(inst, token, info.prefix .. "." .. var)
 		end
 
-		this.__defined[var] = true
+		self.__defined[var] = true
 
 		if result[1] ~= inst.class then
 			local casted = false
@@ -744,27 +744,27 @@ function COMPILER.Compile_GLOBAL(this, inst, token, expressions)
 			end
 
 			if not casted then
-				this:AssignVariable(arg.token, true, var, result[1], 0)
+				self:AssignVariable(arg.token, true, var, result[1], 0)
 			end
 		end
 	end
 
-	this.__defined = {}
+	self.__defined = {}
 
 	return "", 0
 end
 
-function COMPILER.Compile_LOCAL(this, inst, token, expressions)
+function COMPILER:Compile_LOCAL(inst, token, expressions)
 	local tArgs = #expressions
 
 	local results = {}
 
 	for i = 1, tArgs do
 		local arg = expressions[i]
-		local r, c = this:Compile(arg)
+		local r, c = self:Compile(arg)
 
 		if not inst.variables[i] then
-			this:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
+			self:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
 		elseif i < tArgs then
 			results[#results + 1] = {r, arg, true}
 		else
@@ -780,12 +780,12 @@ function COMPILER.Compile_LOCAL(this, inst, token, expressions)
 		local var = token.data
 
 		if not result then
-			this:Throw(token, "Unable to assign variable %s, no matching value.", var)
+			self:Throw(token, "Unable to assign variable %s, no matching value.", var)
 		end
 
-		local class, scope, info = this:AssignVariable(token, true, var, inst.class)
+		local class, scope, info = self:AssignVariable(token, true, var, inst.class)
 
-		this.__defined[var] = true
+		self.__defined[var] = true
 
 		if result[1] ~= inst.class then
 			local casted = false
@@ -796,27 +796,27 @@ function COMPILER.Compile_LOCAL(this, inst, token, expressions)
 			end
 
 			if not casted then
-				this:AssignVariable(arg.token, true, var, result[1])
+				self:AssignVariable(arg.token, true, var, result[1])
 			end
 		end
 	end
 
-	this.__defined = {}
+	self.__defined = {}
 
 	return "", 0
 end
 
-function COMPILER.Compile_ASS(this, inst, token, expressions)
+function COMPILER:Compile_ASS(inst, token, expressions)
 	local tArgs = #expressions
 
 	local results = {}
 
 	for i = 1, tArgs do
 		local arg = expressions[i]
-		local r, c = this:Compile(arg)
+		local r, c = self:Compile(arg)
 
 		if not inst.variables[i] then
-			this:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
+			self:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
 		elseif i < tArgs then
 			results[#results + 1] = {r, arg, true}
 		else
@@ -833,13 +833,13 @@ function COMPILER.Compile_ASS(this, inst, token, expressions)
 		local var = token.data
 
 		if not result then
-			this:Throw(token, "Unable to assign variable %s, no matching value.", var)
+			self:Throw(token, "Unable to assign variable %s, no matching value.", var)
 		end
 
-		this.__defined[var] = true
+		self.__defined[var] = true
 
 		local type = result[1]
-		local class, scope, info = this:GetVariable(var)
+		local class, scope, info = self:GetVariable(var)
 
 		if type ~= class then
 			local arg = result[2]
@@ -850,12 +850,12 @@ function COMPILER.Compile_ASS(this, inst, token, expressions)
 			end
 		end
 
-		local class, scope, info = this:AssignVariable(token, false, var, class)
+		local class, scope, info = self:AssignVariable(token, false, var, class)
 
 		if info and info.prefix then
 			var = info.prefix .. "." .. var
 
-			this:QueueReplace(inst, token, var)
+			self:QueueReplace(inst, token, var)
 		end
 
 		if inst.class == "f" then
@@ -863,24 +863,24 @@ function COMPILER.Compile_ASS(this, inst, token, expressions)
 			
 			if info.signature then
 				local msg = string.format("Failed to assign function to delegate %s(%s), permater missmatch.", var, info.signature)
-				this:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.signature ~= %q then CONTEXT:Throw(%q) %s = nil end", var, var, info.signature, msg, var))
+				self:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.signature ~= %q then CONTEXT:Throw(%q) %s = nil end", var, var, info.signature, msg, var))
 			end
 			
 			if info.resultClass then
 				local msg = string.format("Failed to assign function to delegate %s(%s), result type missmatch.", var, name(info.resultClass))
-				this:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.result ~= %q then CONTEXT:Throw(%q) %s = nil end", var, var, name(info.resultClass), msg, var))
+				self:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.result ~= %q then CONTEXT:Throw(%q) %s = nil end", var, var, name(info.resultClass), msg, var))
 			end
 			
 			if info.resultCount then
 				local msg = string.format("Failed to assign function to delegate %s(%s), result count missmatch.", var, info.resultCount)
-				this:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.count ~= %i then CONTEXT:Throw(%q) %s = nil end", var, var, info.resultCount, msg, var))
+				self:QueueInjectionAfter(inst, inst.final, string.format("if %s and %s.count ~= %i then CONTEXT:Throw(%q) %s = nil end", var, var, info.resultCount, msg, var))
 			end
 
 			injectNewLine = false
 		end
 	end
 
-	this.__defined = {}
+	self.__defined = {}
 
 	return "", 0
 end
@@ -888,35 +888,35 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_AADD(this, inst, token, expressions)
-	this:QueueReplace(inst, inst.__operator, "=")
+function COMPILER:Compile_AADD(inst, token, expressions)
+	self:QueueReplace(inst, inst.__operator, "=")
 
 	for k = 1, #inst.variables do
 		local token = inst.variables[k]
 		local expr = expressions[k]
-		local r, c = this:Compile(expr)
+		local r, c = self:Compile(expr)
 
-		local class, scope, info = this:GetVariable(token.data, nil, false)
+		local class, scope, info = self:GetVariable(token.data, nil, false)
 
 		if info and info.prefix then
-			this:QueueReplace(inst, token, info.prefix .. "." .. token.data)
+			self:QueueReplace(inst, token, info.prefix .. "." .. token.data)
 		end
 
 		local char = "+"
 
-		local op = this:GetOperator("add", class, r)
+		local op = self:GetOperator("add", class, r)
 
 		if not op and r ~= class then
-			if this:CastExpression(class, expr) then
-				op = this:GetOperator("add", class, class)
+			if self:CastExpression(class, expr) then
+				op = self:GetOperator("add", class, class)
 			end
 		end
 
 		if not op then
-			this:Throw(expr.token, "Assignment operator (+=) does not support '%s += %s'", name(class), name(r))
+			self:Throw(expr.token, "Assignment operator (+=) does not support '%s += %s'", name(class), name(r))
 		end
 
-		this:CheckState(op.state, token, "Assignment operator (+=)")
+		self:CheckState(op.state, token, "Assignment operator (+=)")
 
 		if not op.operation then
 			if r == "s" or class == "s" then
@@ -924,417 +924,417 @@ function COMPILER.Compile_AADD(this, inst, token, expressions)
 			end
 
 			if info and info.prefix then
-				this:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, char)
+				self:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, char)
 			else
-				this:QueueInjectionBefore(inst, expr.token, token.data, char)
+				self:QueueInjectionBefore(inst, expr.token, token.data, char)
 			end
 		else
 			-- Implement Operator
-			this.__operators[op.signature] = op.operator
+			self.__operators[op.signature] = op.operator
 
-			this:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
+			self:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
 
 			if op.context then
-			    this:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
+			    self:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
 			end
 
-			this:QueueInjectionAfter(inst, expr.final, ")" )
+			self:QueueInjectionAfter(inst, expr.final, ")" )
 		end	
 
-		this:AssignVariable(token, false, token.data, op.result)
+		self:AssignVariable(token, false, token.data, op.result)
 	end
 end
 
-function COMPILER.Compile_ASUB(this, inst, token, expressions)
-	this:QueueReplace(inst, inst.__operator, "=")
+function COMPILER:Compile_ASUB(inst, token, expressions)
+	self:QueueReplace(inst, inst.__operator, "=")
 
 	for k = 1, #inst.variables do
 		local token = inst.variables[k]
 		local expr = expressions[k]
-		local r, c = this:Compile(expr)
+		local r, c = self:Compile(expr)
 
-		local class, scope, info = this:GetVariable(token.data, nil, false)
+		local class, scope, info = self:GetVariable(token.data, nil, false)
 
 		if info and info.prefix then
-			this:QueueInjectionBefore(inst, token, info.prefix .. ".")
+			self:QueueInjectionBefore(inst, token, info.prefix .. ".")
 		end
 
-		local op = this:GetOperator("sub", class, r)
+		local op = self:GetOperator("sub", class, r)
 
 		if not op and r ~= class then
-			if this:CastExpression(class, expr) then
-				op = this:GetOperator("sub", class, class)
+			if self:CastExpression(class, expr) then
+				op = self:GetOperator("sub", class, class)
 			end
 		end
 
 		if not op then
-			this:Throw(expr.token, "Assignment operator (-=) does not support '%s -= %s'", name(class), name(r))
+			self:Throw(expr.token, "Assignment operator (-=) does not support '%s -= %s'", name(class), name(r))
 		end
 
-		this:CheckState(op.state, token, "Assignment operator (-=)")
+		self:CheckState(op.state, token, "Assignment operator (-=)")
 
 		if not op.operation then
 
 			if info and info.prefix then
-				this:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "-")
+				self:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "-")
 			else
-				this:QueueInjectionBefore(inst, expr.token, token.data, char)
+				self:QueueInjectionBefore(inst, expr.token, token.data, char)
 			end
 		else
 			-- Implement Operator
-			this.__operators[op.signature] = op.operator
+			self.__operators[op.signature] = op.operator
 
-			this:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
+			self:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
 
 			if op.context then
-			    this:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
+			    self:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
 			end
 
-			this:QueueInjectionAfter(inst, expr.final, ")" )
+			self:QueueInjectionAfter(inst, expr.final, ")" )
 		end	
 
-		this:AssignVariable(token, false, token.data, op.result)
+		self:AssignVariable(token, false, token.data, op.result)
 	end
 end
 
 
 
-function COMPILER.Compile_ADIV(this, inst, token, expressions)
-	this:QueueReplace(inst, inst.__operator, "=")
+function COMPILER:Compile_ADIV(inst, token, expressions)
+	self:QueueReplace(inst, inst.__operator, "=")
 
 	for k = 1, #inst.variables do
 		local token = inst.variables[k]
 		local expr = expressions[k]
-		local r, c = this:Compile(expr)
+		local r, c = self:Compile(expr)
 
-		local class, scope, info = this:GetVariable(token.data, nil, false)
+		local class, scope, info = self:GetVariable(token.data, nil, false)
 
 		if info and info.prefix then
-			this:QueueInjectionBefore(inst, token, info.prefix .. ".")
+			self:QueueInjectionBefore(inst, token, info.prefix .. ".")
 		end
 
-		local op = this:GetOperator("div", class, r)
+		local op = self:GetOperator("div", class, r)
 
 		if not op and r ~= class then
-			if this:CastExpression(class, expr) then
-				op = this:GetOperator("div", class, class)
+			if self:CastExpression(class, expr) then
+				op = self:GetOperator("div", class, class)
 			end
 		end
 
 		if not op then
-			this:Throw(expr.token, "Assignment operator (/=) does not support '%s /= %s'", name(class), name(r))
+			self:Throw(expr.token, "Assignment operator (/=) does not support '%s /= %s'", name(class), name(r))
 		end
 
-		this:CheckState(op.state, token, "Assignment operator (/=)")
+		self:CheckState(op.state, token, "Assignment operator (/=)")
 
 		if not op.operation then
 
 			if info and info.prefix then
-				this:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "/")
+				self:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "/")
 			else
-				this:QueueInjectionBefore(inst, expr.token, token.data, char)
+				self:QueueInjectionBefore(inst, expr.token, token.data, char)
 			end
 		else
 			-- Implement Operator
-			this.__operators[op.signature] = op.operator
+			self.__operators[op.signature] = op.operator
 
-			this:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
+			self:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
 
 			if op.context then
-			    this:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
+			    self:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
 			end
 
-			this:QueueInjectionAfter(inst, expr.final, ")" )
+			self:QueueInjectionAfter(inst, expr.final, ")" )
 		end	
 
-		this:AssignVariable(token, false, token.data, op.result)
+		self:AssignVariable(token, false, token.data, op.result)
 	end
 end
 
-function COMPILER.Compile_AMUL(this, inst, token, expressions)
-	this:QueueReplace(inst, inst.__operator, "=")
+function COMPILER:Compile_AMUL(inst, token, expressions)
+	self:QueueReplace(inst, inst.__operator, "=")
 
 	for k = 1, #inst.variables do
 		local token = inst.variables[k]
 		local expr = expressions[k]
-		local r, c = this:Compile(expr)
+		local r, c = self:Compile(expr)
 
-		local class, scope, info = this:GetVariable(token.data, nil, false)
+		local class, scope, info = self:GetVariable(token.data, nil, false)
 
 		if info and info.prefix then
-			this:QueueInjectionBefore(inst, token, info.prefix .. ".")
+			self:QueueInjectionBefore(inst, token, info.prefix .. ".")
 		end
 
-		local op = this:GetOperator("mul", class, r)
+		local op = self:GetOperator("mul", class, r)
 
 		if not op and r ~= class then
-			if this:CastExpression(class, expr) then
-				op = this:GetOperator("mul", class, class)
+			if self:CastExpression(class, expr) then
+				op = self:GetOperator("mul", class, class)
 			end
 		end
 
 		if not op then
-			this:Throw(expr.token, "Assignment operator (*=) does not support '%s *= %s'", name(class), name(r))
+			self:Throw(expr.token, "Assignment operator (*=) does not support '%s *= %s'", name(class), name(r))
 		end
 
-		this:CheckState(op.state, token, "Assignment operator (*=)")
+		self:CheckState(op.state, token, "Assignment operator (*=)")
 
 		if not op.operation then
 
 			if info and info.prefix then
-				this:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "*")
+				self:QueueInjectionBefore(inst, expr.token, info.prefix .. "." .. token.data, "*")
 			else
-				this:QueueInjectionBefore(inst, expr.token, token.data, char)
+				self:QueueInjectionBefore(inst, expr.token, token.data, char)
 			end
 		else
 			-- Implement Operator
-			this.__operators[op.signature] = op.operator
+			self.__operators[op.signature] = op.operator
 
-			this:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
+			self:QueueInjectionBefore(inst, expr.token, "_OPS", "[", "\"" .. op.signature .. "\"", "]", "(")
 
 			if op.context then
-			    this:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
+			    self:QueueInjectionBefore(inst, expr.token "CONTEXT", ",")
 			end
 
-			this:QueueInjectionAfter(inst, expr.final, ")" )
+			self:QueueInjectionAfter(inst, expr.final, ")" )
 		end	
 
-		this:AssignVariable(token, false, token.data, op.result)
+		self:AssignVariable(token, false, token.data, op.result)
 	end
 end
 
 --[[
 ]]
 
-function COMPILER.Compile_TEN(this, inst, token, expressions)
+function COMPILER:Compile_TEN(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
 	local expr3 = expressions[3]
-	local r3, c3 = this:Compile(expr1)
+	local r3, c3 = self:Compile(expr1)
 
-	local op = this:GetOperator("ten", r1, r2, r3)
+	local op = self:GetOperator("ten", r1, r2, r3)
 
 	if not op then
-		this:Throw(expr.token, "Tenary operator (A ? b : C) does not support '%s ? %s : %s'", name(r1), name(r2), name(r3))
+		self:Throw(expr.token, "Tenary operator (A ? b : C) does not support '%s ? %s : %s'", name(r1), name(r2), name(r3))
 	elseif not op.operation then
-		this:QueueReplace(inst, inst.__and, "and")
-		this:QueueReplace(inst, inst.__or, "or")
+		self:QueueReplace(inst, inst.__and, "and")
+		self:QueueReplace(inst, inst.__or, "or")
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__and, ",")
-		this:QueueReplace(inst, inst.__or, ",")
+		self:QueueReplace(inst, inst.__and, ",")
+		self:QueueReplace(inst, inst.__or, ",")
 		
-		this:QueueInjectionAfter(inst, expr3.final, ")" )
+		self:QueueInjectionAfter(inst, expr3.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end	
 
-	this:CheckState(op.state, token, "Tenary operator (A ? b : C)")
+	self:CheckState(op.state, token, "Tenary operator (A ? b : C)")
 
 	return op.result, op.rCount
 end
 
 
-function COMPILER.Compile_OR(this, inst, token, expressions)
+function COMPILER:Compile_OR(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("or", r1, r2)
+	local op = self:GetOperator("or", r1, r2)
 
 	if not op then
-		local is1 = this:Expression_IS(expr1)
-		local is2 = this:Expression_IS(expr2)
+		local is1 = self:Expression_IS(expr1)
+		local is2 = self:Expression_IS(expr2)
 
 		if is1 and is2 then
-			op = this:GetOperator("and", "b", "b")
+			op = self:GetOperator("and", "b", "b")
 		end
 
 		if not op then
-			this:Throw(token, "Logical or operator (||) does not support '%s || %s'", name(r1), name(r2))
+			self:Throw(token, "Logical or operator (||) does not support '%s || %s'", name(r1), name(r2))
 		end
 	elseif not op.operation then
-		this:QueueReplace(inst, inst.__operator, "or")
+		self:QueueReplace(inst, inst.__operator, "or")
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Logical or operator (||) '%s || %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Logical or operator (||) '%s || %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_AND(this, inst, token, expressions)
+function COMPILER:Compile_AND(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("and", r1, r2)
+	local op = self:GetOperator("and", r1, r2)
 
 	if not op then
-		local is1 = this:Expression_IS(expr1)
-		local is2 = this:Expression_IS(expr2)
+		local is1 = self:Expression_IS(expr1)
+		local is2 = self:Expression_IS(expr2)
 
 		if is1 and is2 then
-			op = this:GetOperator("and", "b", "b")
+			op = self:GetOperator("and", "b", "b")
 		end
 
 		if not op then
-			this:Throw(token, "Logical and operator (&&) does not support '%s && %s'", name(r1), name(r2))
+			self:Throw(token, "Logical and operator (&&) does not support '%s && %s'", name(r1), name(r2))
 		end
 	elseif not op.operation then
-		this:QueueReplace(inst, inst.__operator, "and")
+		self:QueueReplace(inst, inst.__operator, "and")
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Logical and operator (&&) '%s && %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Logical and operator (&&) '%s && %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_BXOR(this, inst, token, expressions)
+function COMPILER:Compile_BXOR(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("bxor", r1, r2)
+	local op = self:GetOperator("bxor", r1, r2)
 
 	if not op then
-		this:Throw(token, "Binary xor operator (^^) does not support '%s ^^ %s'", name(r1), name(r2))
+		self:Throw(token, "Binary xor operator (^^) does not support '%s ^^ %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueInjectionBefore(inst, expr1.token, "bit.bxor(")
+		self:QueueInjectionBefore(inst, expr1.token, "bit.bxor(")
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
 		
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Binary xor operator (^^) '%s ^^ %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Binary xor operator (^^) '%s ^^ %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_BOR(this, inst, token, expressions)
+function COMPILER:Compile_BOR(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("bor", r1, r2)
+	local op = self:GetOperator("bor", r1, r2)
 
 	if not op then
-		this:Throw(token, "Binary or operator (|) does not support '%s | %s'", name(r1), name(r2))
+		self:Throw(token, "Binary or operator (|) does not support '%s | %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueInjectionBefore(inst, expr1.token, "bit.bor(")
+		self:QueueInjectionBefore(inst, expr1.token, "bit.bor(")
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Binary xor operator (|) '%s | %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Binary xor operator (|) '%s | %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_BAND(this, inst, token, expressions)
+function COMPILER:Compile_BAND(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("band", r1, r2)
+	local op = self:GetOperator("band", r1, r2)
 
 	if not op then
-		this:Throw(token, "Binary or operator (&) does not support '%s & %s'", name(r1), name(r2))
+		self:Throw(token, "Binary or operator (&) does not support '%s & %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueInjectionBefore(inst, expr1.token, "bit.band(")
+		self:QueueInjectionBefore(inst, expr1.token, "bit.band(")
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
 		
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Binary xor operator (&) '%s & %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Binary xor operator (&) '%s & %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
@@ -1342,34 +1342,34 @@ end
 --[[function COMPILER.Compile_EQ_MUL(inst, token, expressions)
 end]]
 
-function COMPILER.Compile_EQ(this, inst, token, expressions)
+function COMPILER:Compile_EQ(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("eq", r1, r2)
+	local op = self:GetOperator("eq", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (==) does not support '%s == %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (==) does not support '%s == %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Leave the code alone.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (==) '%s == %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (==) '%s == %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
@@ -1377,238 +1377,238 @@ end
 --[[function COMPILER.Compile_NEQ_MUL(inst, token, expressions)
 end]]
 
-function COMPILER.Compile_NEQ(this, inst, token, expressions)
+function COMPILER:Compile_NEQ(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("neq", r1, r2)
+	local op = self:GetOperator("neq", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (!=) does not support '%s != %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (!=) does not support '%s != %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueReplace(inst, inst.__operator, "~=")
+		self:QueueReplace(inst, inst.__operator, "~=")
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (!=) '%s != %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (!=) '%s != %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_LTH(this, inst, token, expressions)
+function COMPILER:Compile_LTH(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("lth", r1, r2)
+	local op = self:GetOperator("lth", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (<) does not support '%s < %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (<) does not support '%s < %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Leave the code alone.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (<) '%s < %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (<) '%s < %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_LEQ(this, inst, token, expressions)
+function COMPILER:Compile_LEQ(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("leg", r1, r2)
+	local op = self:GetOperator("leg", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (<=) does not support '%s <= %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (<=) does not support '%s <= %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Leave the code alone.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (<=) '%s <= %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (<=) '%s <= %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_GTH(this, inst, token, expressions)
+function COMPILER:Compile_GTH(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("gth", r1, r2)
+	local op = self:GetOperator("gth", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (>) does not support '%s > %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (>) does not support '%s > %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Leave the code alone.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (>) '%s > %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (>) '%s > %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_GEQ(this, inst, token, expressions)
+function COMPILER:Compile_GEQ(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("geq", r1, r2)
+	local op = self:GetOperator("geq", r1, r2)
 
 	if not op then
-		this:Throw(token, "Comparison operator (>=) does not support '%s >= %s'", name(r1), name(r2))
+		self:Throw(token, "Comparison operator (>=) does not support '%s >= %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Leave the code alone.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Comparison operator (>=) '%s >= %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Comparison operator (>=) '%s >= %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_BSHL(this, inst, token, expressions)
+function COMPILER:Compile_BSHL(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("bshl", r1, r2)
+	local op = self:GetOperator("bshl", r1, r2)
 
 	if not op then
-		this:Throw(token, "Binary shift operator (<<) does not support '%s << %s'", name(r1), name(r2))
+		self:Throw(token, "Binary shift operator (<<) does not support '%s << %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueInjectionBefore(inst, expr1.token, "bit.lshift(")
+		self:QueueInjectionBefore(inst, expr1.token, "bit.lshift(")
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
 		
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 		
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Binary shift operator (<<) '%s << %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Binary shift operator (<<) '%s << %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_BSHR(this, inst, token, expressions)
+function COMPILER:Compile_BSHR(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("bshr", r1, r2)
+	local op = self:GetOperator("bshr", r1, r2)
 
 	if not op then
-		this:Throw(token, "Binary shift operator (>>) does not support '%s >> %s'", name(r1), name(r2))
+		self:Throw(token, "Binary shift operator (>>) does not support '%s >> %s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueInjectionBefore(inst, expr1.token, "bit.rshift(")
+		self:QueueInjectionBefore(inst, expr1.token, "bit.rshift(")
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
 		
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Binary shift operator (>>) '%s >> %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Binary shift operator (>>) '%s >> %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
@@ -1616,286 +1616,286 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_ADD(this, inst, token, expressions)
+function COMPILER:Compile_ADD(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("add", r1, r2)
+	local op = self:GetOperator("add", r1, r2)
 
 	if not op then
-		this:Throw(token, "Addition operator (+) does not support '%s + %s'", name(r1), name(r2))
+		self:Throw(token, "Addition operator (+) does not support '%s + %s'", name(r1), name(r2))
 	elseif not op.operation then
 		if r1 == "s" or r2 == "s" then
-			this:QueueReplace(inst, inst.__operator, "..") -- Replace + with .. for string addition
+			self:QueueReplace(inst, inst.__operator, "..") -- Replace + with .. for string addition
 		end
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Addition operator (+) '%s + %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Addition operator (+) '%s + %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_SUB(this, inst, token, expressions)
+function COMPILER:Compile_SUB(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("sub", r1, r2)
+	local op = self:GetOperator("sub", r1, r2)
 
 	if not op then
-		this:Throw(token, "Subtraction operator (-) does not support '%s - %s'", name(r1), name(r2))
+		self:Throw(token, "Subtraction operator (-) does not support '%s - %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Subtraction operator (-) '%s - %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Subtraction operator (-) '%s - %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_DIV(this, inst, token, expressions)
+function COMPILER:Compile_DIV(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("div", r1, r2)
+	local op = self:GetOperator("div", r1, r2)
 
 	if not op then
-		this:Throw(expr.token, "Division operator (/) does not support '%s / %s'", name(r1), name(r2))
+		self:Throw(expr.token, "Division operator (/) does not support '%s / %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Division operator (/) '%s / %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Division operator (/) '%s / %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_MUL(this, inst, token, expressions)
+function COMPILER:Compile_MUL(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("mul", r1, r2)
+	local op = self:GetOperator("mul", r1, r2)
 
 	if not op then
-		this:Throw(token, "Multiplication operator (*) does not support '%s * %s'", name(r1), name(r2))
+		self:Throw(token, "Multiplication operator (*) does not support '%s * %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Multiplication operator (*) '%s * %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Multiplication operator (*) '%s * %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_EXP(this, inst, token, expressions)
+function COMPILER:Compile_EXP(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("exp", r1, r2)
+	local op = self:GetOperator("exp", r1, r2)
 
 	if not op then
-		this:Throw(token, "Exponent operator (^) does not support '%s ^ %s'", name(r1), name(r2))
+		self:Throw(token, "Exponent operator (^) does not support '%s ^ %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Exponent operator (^) '%s ^ %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Exponent operator (^) '%s ^ %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_MOD(this, inst, token, expressions)
+function COMPILER:Compile_MOD(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
 	local expr2 = expressions[2]
-	local r2, c2 = this:Compile(expr2)
+	local r2, c2 = self:Compile(expr2)
 
-	local op = this:GetOperator("mod", r1, r2)
+	local op = self:GetOperator("mod", r1, r2)
 
 	if not op then
-		this:Throw(token, "Modulus operator (%) does not support '%s % %s'", name(r1), name(r2))
+		self:Throw(token, "Modulus operator (%) does not support '%s % %s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 
-		this:QueueReplace(inst, inst.__operator, ",")
+		self:QueueReplace(inst, inst.__operator, ",")
 		
-		this:QueueInjectionAfter(inst, expr2.final, ")" )
+		self:QueueInjectionAfter(inst, expr2.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Modulus operator (%) '%s % %s'", name(r1), name(r2))
+	self:CheckState(op.state, token, "Modulus operator (%) '%s % %s'", name(r1), name(r2))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_NEG(this, inst, token, expressions)
+function COMPILER:Compile_NEG(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
-	local op = this:GetOperator("neg", r1)
+	local op = self:GetOperator("neg", r1)
 
 	if not op then
-		this:Throw(token, "Negation operator (-A) does not support '-%s'", name(r1))
+		self:Throw(token, "Negation operator (-A) does not support '-%s'", name(r1))
 	elseif not op.operation then
 		-- Do not change the code.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 		
-		this:QueueInjectionAfter(inst, expr1.final, ")" )
+		self:QueueInjectionAfter(inst, expr1.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Negation operator (-A) '-%s'", name(r1))
+	self:CheckState(op.state, token, "Negation operator (-A) '-%s'", name(r1))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_NOT(this, inst, token, expressions)
+function COMPILER:Compile_NOT(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
-	local op = this:GetOperator("not", r1)
+	local op = self:GetOperator("not", r1)
 
 	if not op then
-		this:Throw(token, "Not operator (!A) does not support '!%s'", name(r1), name(r2))
+		self:Throw(token, "Not operator (!A) does not support '!%s'", name(r1), name(r2))
 	elseif not op.operation then
-		this:QueueReplace(inst, inst.__operator, "not")
+		self:QueueReplace(inst, inst.__operator, "not")
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 		
-		this:QueueInjectionAfter(inst, expr1.final, ")" )
+		self:QueueInjectionAfter(inst, expr1.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Not operator (!A) '!%s'", name(r1))
+	self:CheckState(op.state, token, "Not operator (!A) '!%s'", name(r1))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_LEN(this, inst, token, expressions)
+function COMPILER:Compile_LEN(inst, token, expressions)
 	local expr1 = expressions[1]
-	local r1, c1 = this:Compile(expr1)
+	local r1, c1 = self:Compile(expr1)
 
-	local op = this:GetOperator("len", r1)
+	local op = self:GetOperator("len", r1)
 
 	if not op then
-		this:Throw(token, "Length operator (#A) does not support '#%s'", name(r1), name(r2))
+		self:Throw(token, "Length operator (#A) does not support '#%s'", name(r1), name(r2))
 	elseif not op.operation then
 		-- Once again we change nothing.
 	else
-		this:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr1.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr1.token, "CONTEXT", ",")
 		end
 		
-		this:QueueInjectionAfter(inst, expr1.final, ")" )
+		self:QueueInjectionAfter(inst, expr1.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
-	this:CheckState(op.state, token, "Length operator (#A) '#%s'", name(r1))
+	self:CheckState(op.state, token, "Length operator (#A) '#%s'", name(r1))
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Expression_IS(this, expr)
-	local op = this:GetOperator("is", expr.result)
+function COMPILER:Expression_IS(expr)
+	local op = self:GetOperator("is", expr.result)
 
 	if op then
-		if not this:CheckState(op.state) then
+		if not self:CheckState(op.state) then
 			return false, expr
 		elseif not op.operation then
 			expr.result = op.type
@@ -1903,15 +1903,15 @@ function COMPILER.Expression_IS(this, expr)
 
 			return true, expr
 		else
-			this:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
+			self:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
 
 			if op.context then
-			    this:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
+			    self:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
 			end
 			
-			this:QueueInjectionAfter(inst, expr.final, ")" )
+			self:QueueInjectionAfter(inst, expr.final, ")" )
 
-			this.__operators[op.signature] = op.operator
+			self.__operators[op.signature] = op.operator
 
 			expr.result = op.type
 			expr.rCount = op.count
@@ -1925,7 +1925,7 @@ function COMPILER.Expression_IS(this, expr)
 	return false, expr
 end
 
-function COMPILER.CastExpression(this, type, expr)
+function COMPILER:CastExpression(type, expr)
 
 	local signature = string.format("(%s)%s", name(type), name(expr.result))
 	
@@ -1935,19 +1935,19 @@ function COMPILER.CastExpression(this, type, expr)
 		return false, expr
 	end
 
-	if not this:CheckState(op.state) then
+	if not self:CheckState(op.state) then
 		return false, expr
 	end
 
-	this:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
+	self:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
 
 	if op.context then
-	    this:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
+	    self:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
 	end
 		
-	this:QueueInjectionAfter(inst, expr.final, ")" )
+	self:QueueInjectionAfter(inst, expr.final, ")" )
 
-	this.__operators[op.signature] = op.operator
+	self.__operators[op.signature] = op.operator
 
 	expr.result = op.type
 	expr.rCount = op.count
@@ -1955,97 +1955,97 @@ function COMPILER.CastExpression(this, type, expr)
 	return true, expr
 end
 
-function COMPILER.Compile_CAST(this, inst, token, expressions)
+function COMPILER:Compile_CAST(inst, token, expressions)
 	local expr = expressions[1]
 
-	this:Compile(expr)
+	self:Compile(expr)
 
-	local t = this:CastExpression(inst.class, expr)
+	local t = self:CastExpression(inst.class, expr)
 
 	if not t then
-		this:Throw(token, "Type of %s can not be cast to type of %s.", name(expr.result), name(inst.class))
+		self:Throw(token, "Type of %s can not be cast to type of %s.", name(expr.result), name(inst.class))
 	end
 
 	return expr.result, expr.rCount
 end
 
-function COMPILER.Compile_VAR(this, inst, token, expressions)
-	if this.__defined[inst.variable] then
-		this:Throw(token, "Variable %s is defined here and can not be used as part of an expression.", inst.variable)
+function COMPILER:Compile_VAR(inst, token, expressions)
+	if self.__defined[inst.variable] then
+		self:Throw(token, "Variable %s is defined here and can not be used as part of an expression.", inst.variable)
 	end
 
-	local c, s, var = this:GetVariable(inst.variable)
+	local c, s, var = self:GetVariable(inst.variable)
 
 	if var and var.prefix then
-		this:QueueReplace(inst, token, var.prefix .. "." .. token.data)
+		self:QueueReplace(inst, token, var.prefix .. "." .. token.data)
 	end
 
 	if not c then
-		this:Throw(token, "Variable %s does not exist.", inst.variable)
+		self:Throw(token, "Variable %s does not exist.", inst.variable)
 	end
 
 	return c, 1
 end
 
-function COMPILER.Compile_BOOL(this, inst, token, expressions)
+function COMPILER:Compile_BOOL(inst, token, expressions)
 	return "b", 1
 end
 
-function COMPILER.Compile_VOID(this, inst, token, expressions)
+function COMPILER:Compile_VOID(inst, token, expressions)
 	return "", 1
 end
 
-function COMPILER.Compile_NUM(this, inst, token, expressions)
+function COMPILER:Compile_NUM(inst, token, expressions)
 	return "n", 1
 end
 
-function COMPILER.Compile_STR(this, inst, token, expressions)
+function COMPILER:Compile_STR(inst, token, expressions)
 	return "s", 1
 end
 
-function COMPILER.Compile_PTRN(this, inst, token, expressions)
+function COMPILER:Compile_PTRN(inst, token, expressions)
 	return "_ptr", 1
 end
 
-function COMPILER.Compile_CLS(this, inst, token, expressions)
-	this:QueueReplace(inst, token, "\"" .. token.data .. "\"")
+function COMPILER:Compile_CLS(inst, token, expressions)
+	self:QueueReplace(inst, token, "\"" .. token.data .. "\"")
 	return "_cls", 1
 end
 
-function COMPILER.Compile_COND(this, inst, token, expressions)
+function COMPILER:Compile_COND(inst, token, expressions)
 	local expr = expressions[1]
-	local r, c = this:Compile(expr)
+	local r, c = self:Compile(expr)
 
 	if r == "b" then
 		return r, c
 	end
 
-	local op = this:GetOperator("is", r)
+	local op = self:GetOperator("is", r)
 
-	if not op and this:CastExpression("b", expr) then
+	if not op and self:CastExpression("b", expr) then
 		return r, "b"
 	end
 
 	if not op then
-		this:Throw(token, "No such condition (%s).", name(r))
+		self:Throw(token, "No such condition (%s).", name(r))
 	elseif not op.operation then
 		-- Once again we change nothing.
 	else
-		this:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
+		    self:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
 		end
 		
-		this:QueueInjectionAfter(inst, expr.final, ")" )
+		self:QueueInjectionAfter(inst, expr.final, ")" )
 
-		this.__operators[op.signature] = op.operator
+		self.__operators[op.signature] = op.operator
 	end
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_NEW(this, inst, token, expressions)
+function COMPILER:Compile_NEW(inst, token, expressions)
 	local op
 	local ids = {}
 	local total = #expressions
@@ -2057,7 +2057,7 @@ function COMPILER.Compile_NEW(this, inst, token, expressions)
 		op = constructors[inst.class .. "()"]
 	else
 		for k, expr in pairs(expressions) do
-			local r, c = this:Compile(expr)
+			local r, c = self:Compile(expr)
 			ids[#ids + 1] = r
 
 			if k == total then
@@ -2101,32 +2101,32 @@ function COMPILER.Compile_NEW(this, inst, token, expressions)
 	local signature = string.format("%s(%s)", name(inst.class), names(ids))
 
 	if not op then
-		this:Throw(token, "No such constructor, new %s", signature)
+		self:Throw(token, "No such constructor, new %s", signature)
 	end
 
-	this:CheckState(op.state, token, "Constructor 'new %s", signature)
+	self:CheckState(op.state, token, "Constructor 'new %s", signature)
 
 	if type(op.operator) == "function" then
 
-		this:QueueRemove(inst, inst.__new)
-		this:QueueRemove(inst, inst.__const)
-		this:QueueRemove(inst, inst.__lpa)
+		self:QueueRemove(inst, inst.__new)
+		self:QueueRemove(inst, inst.__const)
+		self:QueueRemove(inst, inst.__lpa)
 
-		this:QueueInjectionBefore(inst, inst.__const, "_CONST[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, inst.__const, "_CONST[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, inst.__const, "CONTEXT")
+		    self:QueueInjectionBefore(inst, inst.__const, "CONTEXT")
 
 		    if total > 0 then
-				this:QueueInjectionBefore(inst, inst.__const, ",")
+				self:QueueInjectionBefore(inst, inst.__const, ",")
 			end
 		end
 
-		this.__constructors[op.signature] = op.operator
+		self.__constructors[op.signature] = op.operator
 	elseif type(op.operator) == "string" then
-		this:QueueRemove(inst, inst.__new)
-		this:QueueRemove(inst, inst.__const)
-		this:QueueReplace(inst, inst.__const, op.operator)
+		self:QueueRemove(inst, inst.__new)
+		self:QueueRemove(inst, inst.__const)
+		self:QueueReplace(inst, inst.__const, op.operator)
 	else
 		local signature = string.format("%s.", inst.library, op.signature)
 		error("Attempt to inject " .. op.signature .. " but operator was incorrect " .. type(op.operator) .. ".")
@@ -2138,9 +2138,9 @@ function COMPILER.Compile_NEW(this, inst, token, expressions)
 				local arg = expressions[i]
 
 				if arg.result ~= "_vr" then
-					this:QueueInjectionBefore(inst, this:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
+					self:QueueInjectionBefore(inst, self:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
 
-					this:QueueInjectionAfter(inst, arg.final, "}")
+					self:QueueInjectionAfter(inst, arg.final, "}")
 				end
 			end
 		end
@@ -2149,9 +2149,9 @@ function COMPILER.Compile_NEW(this, inst, token, expressions)
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_METH(this, inst, token, expressions)
+function COMPILER:Compile_METH(inst, token, expressions)
 	local expr = expressions[1]
-	local mClass, mCount = this:Compile(expr)
+	local mClass, mCount = self:Compile(expr)
 
 	local op
 	local vargs
@@ -2164,7 +2164,7 @@ function COMPILER.Compile_METH(this, inst, token, expressions)
 	else
 		for k, expr in pairs(expressions) do
 			if k > 1 then
-				local r, c = this:Compile(expr)
+				local r, c = self:Compile(expr)
 
 				ids[#ids + 1] = r
 
@@ -2215,32 +2215,32 @@ function COMPILER.Compile_METH(this, inst, token, expressions)
 	end
 
 	if not op then
-		this:Throw(token, "No such method %s.%s(%s).", name(mClass), inst.method, names(ids))
+		self:Throw(token, "No such method %s.%s(%s).", name(mClass), inst.method, names(ids))
 	end
 
-	this:CheckState(op.state, token, "Method %s.%s(%s)", name(mClass), inst.method, names(ids))
+	self:CheckState(op.state, token, "Method %s.%s(%s)", name(mClass), inst.method, names(ids))
 
 
 	if type(op.operator) == "function" then
-		this:QueueRemove(inst, inst.__operator)
-		this:QueueRemove(inst, inst.__method)
+		self:QueueRemove(inst, inst.__operator)
+		self:QueueRemove(inst, inst.__method)
 
 		if total == 1 then
-			this:QueueRemove(inst, inst.__lpa)
+			self:QueueRemove(inst, inst.__lpa)
 		else
-			this:QueueReplace(inst, inst.__lpa, ",")
+			self:QueueReplace(inst, inst.__lpa, ",")
 		end
 
-		this:QueueInjectionBefore(inst, expr.token, "_METH[\"" .. op.signature .. "\"](")
+		self:QueueInjectionBefore(inst, expr.token, "_METH[\"" .. op.signature .. "\"](")
 
 		if op.context then
-		    this:QueueInjectionBefore(inst, expr.token , "CONTEXT,")
+		    self:QueueInjectionBefore(inst, expr.token , "CONTEXT,")
 		end
 
-		this.__methods[op.signature] = op.operator
+		self.__methods[op.signature] = op.operator
 	elseif type(op.operator) == "string" then
-		this:QueueReplace(inst, inst.__operator, ":")
-		this:QueueReplace(inst, inst.__method, op.operator)
+		self:QueueReplace(inst, inst.__operator, ":")
+		self:QueueReplace(inst, inst.__method, op.operator)
 	else
 		local signature = string.format("%s.%s", name(inst.class), op.signature)
 		error("Attempt to inject " .. op.signature .. " but operator was incorrect, got " .. type(op.operator))
@@ -2252,9 +2252,9 @@ function COMPILER.Compile_METH(this, inst, token, expressions)
 				local arg = expressions[i]
 
 				if arg.result ~= "_vr" then
-					this:QueueInjectionBefore(inst, this:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
+					self:QueueInjectionBefore(inst, self:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
 
-					this:QueueInjectionAfter(inst, arg.final, "}")
+					self:QueueInjectionAfter(inst, arg.final, "}")
 				end
 			end
 		end
@@ -2263,12 +2263,12 @@ function COMPILER.Compile_METH(this, inst, token, expressions)
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_FUNC(this, inst, token, expressions)
+function COMPILER:Compile_FUNC(inst, token, expressions)
 	local lib = EXPR_LIBRARIES[inst.library.data]
 
 	if not lib then
 		-- Please note this should be impossible.
-		this:Throw(token, "Library %s does not exist.", inst.library.data)
+		self:Throw(token, "Library %s does not exist.", inst.library.data)
 	end
 
 	local op
@@ -2280,7 +2280,7 @@ function COMPILER.Compile_FUNC(this, inst, token, expressions)
 		op = lib._functions[inst.name .. "()"]
 	else
 		for k, expr in pairs(expressions) do
-			local r, c = this:Compile(expr)
+			local r, c = self:Compile(expr)
 
 			ids[#ids + 1] = r
 
@@ -2327,36 +2327,36 @@ function COMPILER.Compile_FUNC(this, inst, token, expressions)
 	end
 
 	if not op then
-		this:Throw(token, "No such function %s.%s(%s).", inst.library.data, inst.name, names(ids, ","))
+		self:Throw(token, "No such function %s.%s(%s).", inst.library.data, inst.name, names(ids, ","))
 	end
 
-	this:CheckState(op.state, token, "Function %s.%s(%s).", inst.library.data, inst.name, names(ids, ","))
+	self:CheckState(op.state, token, "Function %s.%s(%s).", inst.library.data, inst.name, names(ids, ","))
 
 	if type(op.operator) == "function" then
 		local signature = string.format("%s.%s", inst.library.data, op.signature)
 
-		this:QueueRemove(inst, token)
-		this:QueueRemove(inst, inst.library)
-		this:QueueRemove(inst, inst.__operator)
-		this:QueueRemove(inst, inst.__func)
+		self:QueueRemove(inst, token)
+		self:QueueRemove(inst, inst.library)
+		self:QueueRemove(inst, inst.__operator)
+		self:QueueRemove(inst, inst.__func)
 
-		this:QueueInjectionAfter(inst, inst.__func, "_FUN[\"" .. signature .. "\"]")
+		self:QueueInjectionAfter(inst, inst.__func, "_FUN[\"" .. signature .. "\"]")
 
 		if op.context then
-			this:QueueInjectionAfter(inst, inst.__lpa, "CONTEXT")
+			self:QueueInjectionAfter(inst, inst.__lpa, "CONTEXT")
 
 		    if total > 0 then
-				this:QueueInjectionAfter(inst, inst.__lpa, ",")
+				self:QueueInjectionAfter(inst, inst.__lpa, ",")
 			end
 		end
 
-		this.__functions[signature] = op.operator
+		self.__functions[signature] = op.operator
 	elseif type(op.operator) == "string" then
-		this:QueueRemove(inst, token)
-		this:QueueRemove(inst, inst.library)
-		this:QueueRemove(inst, inst.__operator)
-		this:QueueReplace(inst, inst.__func, op.operator) -- This is error.
-		this:Import(op.operator)
+		self:QueueRemove(inst, token)
+		self:QueueRemove(inst, inst.library)
+		self:QueueRemove(inst, inst.__operator)
+		self:QueueReplace(inst, inst.__func, op.operator) -- This is error.
+		self:Import(op.operator)
 	else
 		local signature = string.format("%s.", inst.library, op.signature)
 		error("Attempt to inject " .. signature .. " but operator was incorrect " .. type(op.operator) .. ".")
@@ -2369,9 +2369,9 @@ function COMPILER.Compile_FUNC(this, inst, token, expressions)
 				local arg = expressions[i]
 
 				if arg.result ~= "_vr" then
-					this:QueueInjectionAfter(inst, this:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
+					self:QueueInjectionAfter(inst, self:OffsetToken(arg.token, -1), "{", "\"" .. arg.result .. "\"", ",")
 
-					this:QueueInjectionAfter(inst, arg.final, "}")
+					self:QueueInjectionAfter(inst, arg.final, "}")
 				end
 			end
 		end
@@ -2391,44 +2391,44 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_LAMBDA(this, inst, token, expressions)
-	this:PushScope()
+function COMPILER:Compile_LAMBDA(inst, token, expressions)
+	self:PushScope()
 
 	for _, peram in pairs(inst.perams) do
 		local var = peram[2]
 		local class = peram[1]
 
-		this:AssignVariable(token, true, var, class)
+		self:AssignVariable(token, true, var, class)
 
 		if class ~= "_vr" then
 			injectNewLine = true
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s == nil or %s[1] == nil then CONTEXT:Throw(\"%s expected for %s, got void\") end", var, var, name(class), var))
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s[1] ~= %q then CONTEXT:Throw(\"%s expected for %s, got \" .. %s[1]) end", var, class, name(class), var, var))
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("%s = %s[2]", var, var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s == nil or %s[1] == nil then CONTEXT:Throw(\"%s expected for %s, got void\") end", var, var, name(class), var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s[1] ~= %q then CONTEXT:Throw(\"%s expected for %s, got \" .. %s[1]) end", var, class, name(class), var, var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("%s = %s[2]", var, var))
 			injectNewLine = false
 		end
 	end
 
-	this:SetOption("udf", (this:GetOption("udf") or 0) + 1)
+	self:SetOption("udf", (self:GetOption("udf") or 0) + 1)
 
-	this:SetOption("retunClass", "?") -- Indicate we do not know this yet.
-	this:SetOption("retunCount", -1) -- Indicate we do not know this yet.
+	self:SetOption("retunClass", "?") -- Indicate we do not know this yet.
+	self:SetOption("retunCount", -1) -- Indicate we do not know this yet.
 
-	this:Compile(inst.stmts)
+	self:Compile(inst.stmts)
 
-	local result = this:GetOption("retunClass")
-	local count = this:GetOption("retunCount")
+	local result = self:GetOption("retunClass")
+	local count = self:GetOption("retunCount")
 
-	this:PopScope()
+	self:PopScope()
 
 	if result == "?" or count == -1 then
 		result = ""
 		count = 0
 	end
 
-	this:QueueInjectionAfter(inst, inst.__end, ", result = \"" .. result .. "\"")
-	this:QueueInjectionAfter(inst, inst.__end, ", count = " .. count)
-	this:QueueInjectionAfter(inst, inst.__end, "}")
+	self:QueueInjectionAfter(inst, inst.__end, ", result = \"" .. result .. "\"")
+	self:QueueInjectionAfter(inst, inst.__end, ", count = " .. count)
+	self:QueueInjectionAfter(inst, inst.__end, "}")
 
 	return "f", 1
 end
@@ -2436,14 +2436,14 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_RETURN(this, inst, token, expressions)
-	local result = this:GetOption("retunClass")
-	local count = this:GetOption("retunCount")
+function COMPILER:Compile_RETURN(inst, token, expressions)
+	local result = self:GetOption("retunClass")
+	local count = self:GetOption("retunCount")
 
 	local results = {}
 
 	for _, expr in pairs(expressions) do
-		local r, c = this:Compile(expr)
+		local r, c = self:Compile(expr)
 		results[#results + 1] = {r, c}
 	end
 
@@ -2461,7 +2461,7 @@ function COMPILER.Compile_RETURN(this, inst, token, expressions)
 			end
 		end
 
-		this:SetOption("retunClass", outClass or "", true)
+		self:SetOption("retunClass", outClass or "", true)
 	else
 		outClass = result
 	end
@@ -2474,10 +2474,10 @@ function COMPILER.Compile_RETURN(this, inst, token, expressions)
 		local cnt = results[i][2]
 
 		if res ~= outClass then
-			local ok = this:CastExpression(outClass, expr)
+			local ok = self:CastExpression(outClass, expr)
 
 			if not ok then
-				this:Throw(expr.token, "Can not return %s here, %s expected.", name(res), name(outClass))
+				self:Throw(expr.token, "Can not return %s here, %s expected.", name(res), name(outClass))
 			end
 		end
 
@@ -2490,19 +2490,19 @@ function COMPILER.Compile_RETURN(this, inst, token, expressions)
 
 	if count == -1 then
 		count = outCount
-		this:SetOption("retunCount", outCount, true)
+		self:SetOption("retunCount", outCount, true)
 	end
 
 	if count ~= outCount then
-		this:Throw(expr.token, "Can not return %i %s('s) here, %i %s('s) expected.", name(outCount), name(outClass), count, name(outClass))
+		self:Throw(expr.token, "Can not return %i %s('s) here, %i %s('s) expected.", name(outCount), name(outClass), count, name(outClass))
 	end
 end
 
 --[[
 ]]
 
-function COMPILER.Compile_DELEGATE(this, inst, token, expressions)
-	local class, scope, info = this:AssignVariable(token, true, inst.variable, "f")
+function COMPILER:Compile_DELEGATE(inst, token, expressions)
+	local class, scope, info = self:AssignVariable(token, true, inst.variable, "f")
 
 	if info then
 		info.signature = table.concat(inst.peramaters, ",")
@@ -2512,38 +2512,38 @@ function COMPILER.Compile_DELEGATE(this, inst, token, expressions)
 	end
 end
 
-function COMPILER.Compile_FUNCT(this, inst, token, expressions)
-	this:PushScope()
+function COMPILER:Compile_FUNCT(inst, token, expressions)
+	self:PushScope()
 
 	for _, peram in pairs(inst.perams) do
 		local var = peram[2]
 		local class = peram[1]
 
-		this:AssignVariable(token, true, var, class)
+		self:AssignVariable(token, true, var, class)
 
 		if class ~= "_vr" then
 			injectNewLine = true
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s == nil or %s[1] == nil then CONTEXT:Throw(\"%s expected for %s, got void\") end", var, var, class, var))
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s[1] ~= %q then CONTEXT:Throw(\"%s expected for %s, got \" .. %s[1]) end", var, class, class, var, var))
-			this:QueueInjectionBefore(inst, inst.stmts.token, string.format("%s = %s[2]", var, var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s == nil or %s[1] == nil then CONTEXT:Throw(\"%s expected for %s, got void\") end", var, var, class, var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("if %s[1] ~= %q then CONTEXT:Throw(\"%s expected for %s, got \" .. %s[1]) end", var, class, class, var, var))
+			self:QueueInjectionBefore(inst, inst.stmts.token, string.format("%s = %s[2]", var, var))
 			injectNewLine = false
 		end
 	end
 
-	this:SetOption("udf", (this:GetOption("udf") or 0) + 1)
+	self:SetOption("udf", (self:GetOption("udf") or 0) + 1)
 
-	this:SetOption("retunClass", inst.resultClass)
-	this:SetOption("retunCount", -1) -- Indicate we do not know this yet.
+	self:SetOption("retunClass", inst.resultClass)
+	self:SetOption("retunCount", -1) -- Indicate we do not know this yet.
 
-	this:Compile(inst.stmts)
+	self:Compile(inst.stmts)
 
-	local count = this:GetOption("retunCount")
+	local count = self:GetOption("retunCount")
 
-	this:PopScope()
+	self:PopScope()
 
 	local variable = inst.variable
 
-	local class, scope, info = this:AssignVariable(token, true, variable, "f")
+	local class, scope, info = self:AssignVariable(token, true, variable, "f")
 
 	if info then
 		info.signature = inst.signature
@@ -2554,30 +2554,30 @@ function COMPILER.Compile_FUNCT(this, inst, token, expressions)
 		if info.prefix then
 			variable = info.prefix .. "." .. variable
 		else
-			this:QueueInjectionBefore(inst, token, "local")
+			self:QueueInjectionBefore(inst, token, "local")
 		end
 	end
 
-	this:QueueInjectionBefore(inst, token, variable, " = { op = ")
-	this:QueueInjectionAfter(inst, inst.__end, ", signature = \"" .. inst.signature .. "\"")
-	this:QueueInjectionAfter(inst, inst.__end, ", result = \"" .. info.resultClass .. "\"")
-	this:QueueInjectionAfter(inst, inst.__end, ", count = " .. count)
-	this:QueueInjectionAfter(inst, inst.__end, "}")
+	self:QueueInjectionBefore(inst, token, variable, " = { op = ")
+	self:QueueInjectionAfter(inst, inst.__end, ", signature = \"" .. inst.signature .. "\"")
+	self:QueueInjectionAfter(inst, inst.__end, ", result = \"" .. info.resultClass .. "\"")
+	self:QueueInjectionAfter(inst, inst.__end, ", count = " .. count)
+	self:QueueInjectionAfter(inst, inst.__end, "}")
 end
 
 --[[
 ]]
 
-function COMPILER.Compile_CALL(this, inst, token, expressions)
+function COMPILER:Compile_CALL(inst, token, expressions)
 	local expr = expressions[1]
-	local res, count = this:Compile(expr)
+	local res, count = self:Compile(expr)
 
 	local prms = {}
 
 	if #expressions > 1 then
 		for i = 2, #expressions do
 			local arg = expressions[i]
-			local r, c = this:Compile(arg)
+			local r, c = self:Compile(arg)
 
 			prms[#prms + 1] = r
 
@@ -2592,12 +2592,12 @@ function COMPILER.Compile_CALL(this, inst, token, expressions)
 	local signature = table.concat(prms, ",")
 
 	if res == "f" and expr.type == "var" then
-		local c, s, info = this:GetVariable(expr.variable)
+		local c, s, info = self:GetVariable(expr.variable)
 		-- The var instruction will have already validated this variable.
 		
 		if info.signature then
 			if info.signature ~= signature then
-				this:Throw(token, "Invalid arguments to user function got %s(%s), %s(%s) expected.", expr.variable, names(signature), expr.variable, names(info.signature))
+				self:Throw(token, "Invalid arguments to user function got %s(%s), %s(%s) expected.", expr.variable, names(signature), expr.variable, names(info.signature))
 			end
 
 			if #expressions > 1 then
@@ -2605,25 +2605,25 @@ function COMPILER.Compile_CALL(this, inst, token, expressions)
 					local arg = expressions[i]
 
 					if arg.result ~= "_vr" then
-						this:QueueInjectionBefore(inst, arg.token, "{", "\"" .. arg.result .. "\"", ",")
+						self:QueueInjectionBefore(inst, arg.token, "{", "\"" .. arg.result .. "\"", ",")
 
-						this:QueueInjectionAfter(inst, arg.final, "}")
+						self:QueueInjectionAfter(inst, arg.final, "}")
 					end
 				end
 			end
 
-			this:QueueReplace(inst, expr.token, "invoke")
+			self:QueueReplace(inst, expr.token, "invoke")
 
-			this:QueueInjectionAfter(inst, token, "(", "CONTEXT", ",\"" .. info.resultClass .. "\",", tostring(info.resultCount), ",")
+			self:QueueInjectionAfter(inst, token, "(", "CONTEXT", ",\"" .. info.resultClass .. "\",", tostring(info.resultCount), ",")
 
 			if info.prefix then
-				this:QueueInjectionAfter(inst, token, info.prefix .. "." .. expr.variable)
+				self:QueueInjectionAfter(inst, token, info.prefix .. "." .. expr.variable)
 			else
-				this:QueueInjectionAfter(inst, token, expr.variable)
+				self:QueueInjectionAfter(inst, token, expr.variable)
 			end
 
 			if #prms >= 1 then
-				this:QueueInjectionAfter(inst, token, ",")
+				self:QueueInjectionAfter(inst, token, ",")
 			end
 
 			return info.resultClass, info.resultCount
@@ -2633,21 +2633,21 @@ function COMPILER.Compile_CALL(this, inst, token, expressions)
 	local op
 
 	if #prms == 0 then
-		op = this:GetOperator("call", res, "")
+		op = self:GetOperator("call", res, "")
 
 		if not op then
-			op = this:GetOperator("call", res, "...")
+			op = self:GetOperator("call", res, "...")
 		end
 	else
 		for i = #prms, 1, -1 do
 			local args = table.concat(prms,",", 1, i)
 
 			if i >= #prms then
-				op = this:GetOperator("call", res, args)
+				op = self:GetOperator("call", res, args)
 			end
 
 			if not op then
-				op = this:GetOperator("call", args, res, "...")
+				op = self:GetOperator("call", args, res, "...")
 			end
 
 			if op then
@@ -2657,24 +2657,24 @@ function COMPILER.Compile_CALL(this, inst, token, expressions)
 	end
 
 	if not op then
-		this:Throw(token, "No such call operation %s(%s)", name(res), names(prms))
+		self:Throw(token, "No such call operation %s(%s)", name(res), names(prms))
 	end
 
-	this:CheckState(op.state, token, "call operation %s(%s).", name(res), names(prms))
+	self:CheckState(op.state, token, "call operation %s(%s).", name(res), names(prms))
 
-	this:QueueRemove(inst, token) -- Removes (
+	self:QueueRemove(inst, token) -- Removes (
 
-	this:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"]", "(")
+	self:QueueInjectionBefore(inst, expr.token, "_OPS[\"" .. op.signature .. "\"]", "(")
 
 	if op.context then
-		this:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
+		self:QueueInjectionBefore(inst, expr.token, "CONTEXT", ",")
 	end
 
 	if #prms >= 1 then
-		this:QueueInjectionBefore(inst, token, ",")
+		self:QueueInjectionBefore(inst, token, ",")
 	end
 
-	this.__operators[op.signature] = op.operator
+	self.__operators[op.signature] = op.operator
 
 	return op.result, op.rCount
 end
@@ -2682,31 +2682,31 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_GET(this, inst, token, expressions)
+function COMPILER:Compile_GET(inst, token, expressions)
 	local value = expressions[1]
-	local vType = this:Compile(value)
+	local vType = self:Compile(value)
 	local index = expressions[2]
-	local iType = this:Compile(index)
+	local iType = self:Compile(index)
 
 	local op
 	local keepid = false
 	local cls = inst.class
 
 	if not cls then
-		op = this:GetOperator("get", vType, iType)
+		op = self:GetOperator("get", vType, iType)
 
 		if not op then
-			this:Throw(token, "No such get operation %s[%s]", name(vType), name(iType))
+			self:Throw(token, "No such get operation %s[%s]", name(vType), name(iType))
 		end
 	else
-		op = this:GetOperator("get", vType, iType, cls.data)
+		op = self:GetOperator("get", vType, iType, cls.data)
 		
 		if not op then
 			keepid = true
 
-			this:QueueReplace(inst, cls, "\'" .. cls.data .. "\'")
+			self:QueueReplace(inst, cls, "\'" .. cls.data .. "\'")
 
-			op = this:GetOperator("get", vType, iType, "_cls")
+			op = self:GetOperator("get", vType, iType, "_cls")
 
 			if op then
 				if op.result == "" then
@@ -2717,44 +2717,44 @@ function COMPILER.Compile_GET(this, inst, token, expressions)
 		end
 
 		if not op then
-			this:Throw(token, "No such get operation %s[%s,%s]", name(vType), name(iType), name(cls.data))
+			self:Throw(token, "No such get operation %s[%s,%s]", name(vType), name(iType), name(cls.data))
 		end
 	end
 
-	this:CheckState(op.state)
+	self:CheckState(op.state)
 
 	if not op.operator then
 		return op.result, op.rCount
 	end
 
-	this:QueueInjectionBefore(inst, value.token, "_OPS[\"" .. op.signature .. "\"](")
+	self:QueueInjectionBefore(inst, value.token, "_OPS[\"" .. op.signature .. "\"](")
 
 	if op.context then
-	   this:QueueInjectionBefore(inst, value.token, "CONTEXT", ",")
+	   self:QueueInjectionBefore(inst, value.token, "CONTEXT", ",")
 	end
 
 	if not keepid then
-		this:QueueRemove(inst, cls)
+		self:QueueRemove(inst, cls)
 	else
-		this:QueueReplace(inst, cls, "'" .. cls.data .. "'")
+		self:QueueReplace(inst, cls, "'" .. cls.data .. "'")
 	end
 
-	this:QueueReplace(inst, inst.__rsb, ")" )
+	self:QueueReplace(inst, inst.__rsb, ")" )
 
-	this:QueueReplace(inst, inst.__lsb, "," )
+	self:QueueReplace(inst, inst.__lsb, "," )
 
-	this.__operators[op.signature] = op.operator
+	self.__operators[op.signature] = op.operator
 
 	return op.result, op.rCount
 end
 
-function COMPILER.Compile_SET(this, inst, token, expressions)
+function COMPILER:Compile_SET(inst, token, expressions)
 	local value = expressions[1]
-	local vType = this:Compile(value)
+	local vType = self:Compile(value)
 	local index = expressions[2]
-	local iType = this:Compile(index)
+	local iType = self:Compile(index)
 	local expr = expressions[3]
-	local vExpr = this:Compile(expr)
+	local vExpr = self:Compile(expr)
 
 	local op
 	local keepclass = false
@@ -2765,51 +2765,51 @@ function COMPILER.Compile_SET(this, inst, token, expressions)
 	end
 
 	if not cls then
-		op = this:GetOperator("set", vType, iType, vExpr)
+		op = self:GetOperator("set", vType, iType, vExpr)
 	else
-		op = this:GetOperator("set", vType, iType, cls.data)
+		op = self:GetOperator("set", vType, iType, cls.data)
 
 		if not op then
 			keepclass = true
-			op = this:GetOperator("set", vType, iType, "_cls", vExpr)
+			op = self:GetOperator("set", vType, iType, "_cls", vExpr)
 		end
 	end
 
 	if not op then
 		if not cls then
-			this:Throw(token, "No such set operation %s[%s] = ", name(vType), name(iType), name(vExpr))
+			self:Throw(token, "No such set operation %s[%s] = ", name(vType), name(iType), name(vExpr))
 		else
-			this:Throw(token, "No such set operation %s[%s, %s] = ", name(vType), name(iType), name(cls.data), name(vExpr))
+			self:Throw(token, "No such set operation %s[%s, %s] = ", name(vType), name(iType), name(cls.data), name(vExpr))
 		end
 	end
 
-	this:CheckState(op.state)
+	self:CheckState(op.state)
 
 	if not op.operator then
 		return op.result, op.rCount
 	end
 
-	this:QueueReplace(inst, token, "," )
+	self:QueueReplace(inst, token, "," )
 
-	this:QueueInjectionBefore(inst, value.token, "_OPS[\"" .. op.signature .. "\"](")
+	self:QueueInjectionBefore(inst, value.token, "_OPS[\"" .. op.signature .. "\"](")
 
 	if op.context then
-	   this:QueueInjectionBefore(inst, value.token, "CONTEXT", ",")
+	   self:QueueInjectionBefore(inst, value.token, "CONTEXT", ",")
 	end
 	
 	if not keepclass then
-		this:QueueRemove(isnt, cls)
+		self:QueueRemove(isnt, cls)
 	else
-		this:QueueReplace(isnt, cls, ", '" .. cls.data .. "'")
+		self:QueueReplace(isnt, cls, ", '" .. cls.data .. "'")
 	end
 
-	this:QueueRemove(inst, inst.__ass, ",")
+	self:QueueRemove(inst, inst.__ass, ",")
 
-	this:QueueReplace(inst, inst.__rsb, "," )
+	self:QueueReplace(inst, inst.__rsb, "," )
 	  
-	this:QueueInjectionAfter(inst, expr.final, ")")
+	self:QueueInjectionAfter(inst, expr.final, ")")
 
-	this.__operators[op.signature] = op.operator
+	self.__operators[op.signature] = op.operator
 
 	return op.result, op.rCount
 end
@@ -2817,109 +2817,109 @@ end
 --[[
 ]]
 
-function COMPILER.Compile_FOR(this, inst, token, expressions)
+function COMPILER:Compile_FOR(inst, token, expressions)
 
 	local start = expressions[1]
-	local tStart = this:Compile(start)
+	local tStart = self:Compile(start)
 	local _end = expressions[2]
-	local tEnd = this:Compile(_end)
+	local tEnd = self:Compile(_end)
 	local step = expressions[3]
 	
 	if not step and (inst.class ~= "n" or tStart  ~= "n" or tEnd ~= "n") then
-		this:Throw(token, "No such loop 'for(%s i = %s %s)'.", name(inst.class), name(tStart), name(tEnd))
+		self:Throw(token, "No such loop 'for(%s i = %s %s)'.", name(inst.class), name(tStart), name(tEnd))
 	elseif step then
-		local tStep = this:Compile(step)
+		local tStep = self:Compile(step)
 		if inst.class ~= "n" or tStart  ~= "n" or tEnd ~= "n" or tEnd ~= "n" or tStep ~= "n" then
-			this:Throw(token, "No such loop 'for(%s i = %s %s %s)'.", name(inst.class), name(tStart), name(tEnd), name(tStep))
+			self:Throw(token, "No such loop 'for(%s i = %s %s %s)'.", name(inst.class), name(tStart), name(tEnd), name(tStep))
 		end
 	end
 
-	this:PushScope()
+	self:PushScope()
 
-	this:AssignVariable(token, true, inst.variable.data, inst.class, nil)
+	self:AssignVariable(token, true, inst.variable.data, inst.class, nil)
 
-	this:Compile(inst.stmts)
+	self:Compile(inst.stmts)
 
-	this:PopScope()
+	self:PopScope()
 end
 
 --[[
 
 ]]
 
-function COMPILER.Compile_TRY(this, inst, token, expressions)
-	this:QueueReplace(inst, token, "local")
+function COMPILER:Compile_TRY(inst, token, expressions)
+	self:QueueReplace(inst, token, "local")
 
-	this:QueueInjectionAfter(inst, token, "ok", ",", inst.__var.data, "=", "pcall(")
+	self:QueueInjectionAfter(inst, token, "ok", ",", inst.__var.data, "=", "pcall(")
 
-	this:PushScope()
+	self:PushScope()
 
-	this:Compile(inst.protected)
+	self:Compile(inst.protected)
 
-	this:PopScope()
+	self:PopScope()
 
-	this:QueueInjectionAfter(inst, inst.protected.final, ")", "if", "(", "not", "ok", "and", inst.__var.data, ".", "state", "==", "'runtime'", ")")
+	self:QueueInjectionAfter(inst, inst.protected.final, ")", "if", "(", "not", "ok", "and", inst.__var.data, ".", "state", "==", "'runtime'", ")")
 
-	this:QueueRemove(inst, inst.__catch)
-	this:QueueRemove(inst, inst.__lpa)
-	this:QueueRemove(inst, inst.__var)
-	this:QueueRemove(inst, inst.__rpa)
+	self:QueueRemove(inst, inst.__catch)
+	self:QueueRemove(inst, inst.__lpa)
+	self:QueueRemove(inst, inst.__var)
+	self:QueueRemove(inst, inst.__rpa)
 
-	this:PushScope()
+	self:PushScope()
 
-	this:AssignVariable(token, true, inst.__var.data, "_er", nil)
+	self:AssignVariable(token, true, inst.__var.data, "_er", nil)
 
-	this:Compile(inst.catch)
+	self:Compile(inst.catch)
 
-	this:PopScope()
+	self:PopScope()
 
-	this:QueueInjectionAfter(inst, inst.catch.final, "elseif not ok then error(", inst.__var.data, ", 0) end")
+	self:QueueInjectionAfter(inst, inst.catch.final, "elseif not ok then error(", inst.__var.data, ", 0) end")
 end
 
 --[[
 ]]
 
-function COMPILER.Compile_INPORT(this, inst, token)
-	if this:GetOption("state") ~= EXPR_SERVER then
-		this:Throw(token, "Wired input('s) must be defined server side.")
+function COMPILER:Compile_INPORT(inst, token)
+	if self:GetOption("state") ~= EXPR_SERVER then
+		self:Throw(token, "Wired input('s) must be defined server side.")
 	end
 
 	for _, token in pairs(inst.variables) do
 		local var = token.data
 
 		if var[1] ~= string.upper(var[1]) then
-			this:Throw(token, "Invalid name for wired input %s, name must be cammel cased")
+			self:Throw(token, "Invalid name for wired input %s, name must be cammel cased")
 		end
 
-		local class, scope, info = this:AssignVariable(token, true, var, inst.class, 0)
+		local class, scope, info = self:AssignVariable(token, true, var, inst.class, 0)
 
 		if info then
 			info.prefix = "INPUT"
 		end
 
-		this.__directives.inport[var] = {class = inst.class, wire = inst.wire_type, func = inst.wire_func}
+		self.__directives.inport[var] = {class = inst.class, wire = inst.wire_type, func = inst.wire_func}
 	end
 end
 
-function COMPILER.Compile_OUTPORT(this, inst, token)
-	if this:GetOption("state") ~= EXPR_SERVER then
-		this:Throw(token, "Wired output('s) must be defined server side.")
+function COMPILER:Compile_OUTPORT(inst, token)
+	if self:GetOption("state") ~= EXPR_SERVER then
+		self:Throw(token, "Wired output('s) must be defined server side.")
 	end
 
 	for _, token in pairs(inst.variables) do
 		local var = token.data
 
 		if var[1] ~= string.upper(var[1]) then
-			this:Throw(token, "Invalid name for wired output %s, name must be cammel cased")
+			self:Throw(token, "Invalid name for wired output %s, name must be cammel cased")
 		end
 
-		local class, scope, info = this:AssignVariable(token, true, var, inst.class, 0)
+		local class, scope, info = self:AssignVariable(token, true, var, inst.class, 0)
 
 		if info then
 			info.prefix = "OUTPUT"
 		end
 
-		this.__directives.outport[var] = {class = inst.class, wire = inst.wire_type, func = inst.wire_func, func_in = inst.wire_func2}
+		self.__directives.outport[var] = {class = inst.class, wire = inst.wire_type, func = inst.wire_func, func_in = inst.wire_func2}
 	end
 end
 
@@ -2927,12 +2927,12 @@ end
 --[[
 ]]
 
-function COMPILER.StartClass(this, name, scope)
+function COMPILER:StartClass(name, scope)
 	if not scope then
-		scope = this.__scopeID
+		scope = self.__scopeID
 	end
 
-	local classes = this.__scopeData[scope].classes
+	local classes = self.__scopeData[scope].classes
 
 	local newclass = {name = name memory = {}}
 
@@ -2941,12 +2941,12 @@ function COMPILER.StartClass(this, name, scope)
 	return newclass
 end
 
-function COMPILER.GetUserClass(this, name, scope, nonDeep)
+function COMPILER:GetUserClass(name, scope, nonDeep)
 	if not scope then
-		scope = this.__scopeID
+		scope = self.__scopeID
 	end
 
-	local v = this.__scopeData[scope].classes[name]
+	local v = self.__scopeData[scope].classes[name]
 
 	if v then
 		return v.class, v.scope, v
@@ -2954,7 +2954,7 @@ function COMPILER.GetUserClass(this, name, scope, nonDeep)
 
 	if not nonDeep then
 		for i = scope, 0, -1 do
-			local v = this.__scopeData[i].classes[name]
+			local v = self.__scopeData[i].classes[name]
 
 			if v then
 				return v.class, v.scope, v
@@ -2964,58 +2964,58 @@ function COMPILER.GetUserClass(this, name, scope, nonDeep)
 end
 
 function COMPILER.AssToClass(token, declaired, varName, class, scope)
-	local class, scope, info = this:AssignVariable(token, declaired, varName, class, scope)
+	local class, scope, info = self:AssignVariable(token, declaired, varName, class, scope)
 	if declaired then
-		local userclass = this:GetOption("userclass")
+		local userclass = self:GetOption("userclass")
 		userclass.memory[varName] = info
-		inf.prefix = "this.vars"
+		inf.prefix = "self.vars"
 	end
 end
 
 
 
-function COMPILER.Compile_CLASS(this, inst, token, stmts)
-	this:PushScope()
-		local class = this:StartClass(inst.__classname.data)
+function COMPILER:Compile_CLASS(inst, token, stmts)
+	self:PushScope()
+		local class = self:StartClass(inst.__classname.data)
 		
-		this:SetOption("userclass", class)
+		self:SetOption("userclass", class)
 
 		for i = 1, #stmts do
-			this:Compile(stmts[i])
+			self:Compile(stmts[i])
 		end
 
-	this:PopScope()
+	self:PopScope()
 
 	-- inst.__classname
-	this:QueueReplace(inst, token, "local")
-	this:QueueRemove(inst, inst.__lcb)
-	this:QueueInjectionAfter(inst, inst.__lcb, " =",  "{", "vars", "=", "{", "}", "}")
-	this:QueueRemove(inst, inst.__rcb)
+	self:QueueReplace(inst, token, "local")
+	self:QueueRemove(inst, inst.__lcb)
+	self:QueueInjectionAfter(inst, inst.__lcb, " =",  "{", "vars", "=", "{", "}", "}")
+	self:QueueRemove(inst, inst.__rcb)
 
 	return "", 0
 end
 
-function COMPILER.Compile_FEILD(this, inst, token, expressions)
+function COMPILER:Compile_FEILD(inst, token, expressions)
 	local expr = expressions[1]
-	local type = this:Compile(expr)
-	local userclass = this:GetUserClass(type)
+	local type = self:Compile(expr)
+	local userclass = self:GetUserClass(type)
 
 	if not userclass then
-		this:Throw(token, "Unable to refrence feild %s.%s here", name(type), inst.__feild.data)
+		self:Throw(token, "Unable to refrence feild %s.%s here", name(type), inst.__feild.data)
 	end
 
 	local info = userclass.vars[inst.__feild.data]
 
 	if not info then
-		this:Throw(token, "No sutch feild %s.%s", type, inst.__feild.data)
+		self:Throw(token, "No sutch feild %s.%s", type, inst.__feild.data)
 	end
 
 	return info.result, 1
 end
 
-function COMPILER.Compile_DEF_FEILD(this, inst, token, expressions)
+function COMPILER:Compile_DEF_FEILD(inst, token, expressions)
 	local tArgs = #expressions
-	local userclass = this:GetOption("userclass")
+	local userclass = self:GetOption("userclass")
 
 	local tArgs = #expressions
 
@@ -3023,10 +3023,10 @@ function COMPILER.Compile_DEF_FEILD(this, inst, token, expressions)
 
 	for i = 1, tArgs do
 		local arg = expressions[i]
-		local r, c = this:Compile(arg)
+		local r, c = self:Compile(arg)
 
 		if not inst.variables[i] then
-			this:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
+			self:Throw(arg.token, "Unable to assign here, value #%i has no matching variable.", i)
 		elseif i < tArgs then
 			results[#results + 1] = {r, arg, true}
 		else
@@ -3042,16 +3042,16 @@ function COMPILER.Compile_DEF_FEILD(this, inst, token, expressions)
 		local var = token.data
 
 		if not result then
-			this:Throw(token, "Unable to assign variable %s, no matching value.", var)
+			self:Throw(token, "Unable to assign variable %s, no matching value.", var)
 		end
 
-		local class, scope, info = this:AssignVariable(token, true, var, inst.class, 0)
+		local class, scope, info = self:AssignVariable(token, true, var, inst.class, 0)
 
 		if info then
-			this:QueueReplace(inst, token, userclass.name .. ".vars." .. var)
+			self:QueueReplace(inst, token, userclass.name .. ".vars." .. var)
 		end
 
-		this.__defined[var] = true
+		self.__defined[var] = true
 
 		if result[1] ~= inst.class then
 			local casted = false
@@ -3062,12 +3062,12 @@ function COMPILER.Compile_DEF_FEILD(this, inst, token, expressions)
 			end
 
 			if not casted then
-				this:AssignVariable(arg.token, true, var, result[1], 0)
+				self:AssignVariable(arg.token, true, var, result[1], 0)
 			end
 		end
 	end
 
-	this.__defined = {}
+	self.__defined = {}
 
 	return "", 0
 end

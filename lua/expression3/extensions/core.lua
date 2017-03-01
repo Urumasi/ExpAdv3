@@ -169,7 +169,7 @@ local class_function = ext_core:RegisterClass("f", {"function"}, istable, notnil
 local class_object = ext_core:RegisterClass("vr", {"variant", "object"}, istable, notnil)
 	-- Yes this should known as an OBJECT, todo :D
 
-function ext_core.PostLoadClasses(this, classes)
+function ext_core:PostLoadClasses(classes)
 	for _, c in pairs(classes) do
 		local id = c.id
 		
@@ -281,9 +281,9 @@ hook.Add("Expression3.PostCompile.System.invoke", "Expression3.Core.Extensions",
 			local arg = expressions[i]
 
 			if arg.result ~= "_vr" then
-				this:QueueInjectionBefore(inst, arg.token, "{", "\"" .. arg.result .. "\"", ",")
+				self:QueueInjectionBefore(inst, arg.token, "{", "\"" .. arg.result .. "\"", ",")
 
-				this:QueueInjectionAfter(inst, arg.final, "}")
+				self:QueueInjectionAfter(inst, arg.final, "}")
 			end
 		end
 	end

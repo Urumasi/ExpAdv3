@@ -8,7 +8,7 @@
 	|________||__/  \__||__L   |__|  J__||________| J______F J______F|____| J______F |__L  J__|  |__L   J__||______F   \__/     J______F
 	
 	::Table Extension::
-		There is no good way to do this.
+		There is no good way to do self.
 ]]
 
 
@@ -129,7 +129,7 @@ extension:RegisterOperator("!=", "t,t", "b", 1)
 
 ]]
 
-function extension.PostLoadClasses(this, classes)
+function extension:PostLoadClasses(classes)
 	for _, c in pairs(classes) do
 		local i = c.id
 
