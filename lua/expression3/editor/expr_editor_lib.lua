@@ -11,50 +11,50 @@
 	NOTE: This file is yet to be included anywhere.
 ]]
 
-local Extension = EXPR_LIB.GetExtensionMetatable();
+local Extension = EXPR_LIB.GetExtensionMetatable()
 
-if (not Extension) then
-	error("Unable to get extention meta table for editor upgrades.");
+if not Extension then
+	error("Unable to get extention meta table for editor upgrades.")
 end
 
 function Extension.RegisterEditorMenu(this, name, icon, open, close)
 	hook.Add("Expression3.AddGolemTabTypes", "Expression3." .. this.name .. "." .. name, function(editor)
-		if (this.enabled) then
+		if this.enabled then
 			editor:AddTabType(name, function(self, ...)
-				local menu = self.tMenuTabs[name];
+				local menu = self.tMenuTabs[name]
 
-				if (menu) then
-					self.pnlSideTabHolder:SetActiveTab(menu.Tab);
+				if menu then
+					self.pnlSideTabHolder:SetActiveTab(menu.Tab)
 					
-					menu.Panel:RequestFocus();
+					menu.Panel:RequestFocus()
 					
-					return menu.Panel, menu.Tab, menu;
+					return menu.Panel, menu.Tab, menu
 				end
 
-				local panel = open(editor, ...);
+				local panel = open(editor, ...)
 
-				local sheet = self.pnlSideTabHolder:AddSheet(name, panel, icon);
+				local sheet = self.pnlSideTabHolder:AddSheet(name, panel, icon)
 
-				self.pnlSideTabHolder:SetActiveTab(sheet.Tab);
+				self.pnlSideTabHolder:SetActiveTab(sheet.Tab)
 
-				self.tMenuTabs[name] = sheet;
+				self.tMenuTabs[name] = sheet
 
-				panel:RequestFocus();
+				panel:RequestFocus()
 
-				return panel, sheet.Tab, sheet;
+				return panel, sheet.Tab, sheet
 			end,
 
 			function(self, pTab, bSave)
-				if (close) then
-					close(self, pTab, bSave);
+				if close then
+					close(self, pTab, bSave)
 				end
 
-				self.tMenuTabs[name] = nil;
-			end);
+				self.tMenuTabs[name] = nil
+			end)
 
 			editor.tbRight:SetupButton(name, icon, BOTTOM, function()
-				editor:NewTab(name);
-			end);
+				editor:NewTab(name)
+			end)
 		end
-	end);
+	end)
 end

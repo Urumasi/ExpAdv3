@@ -148,13 +148,13 @@ function EXPR_WIKI.COMPILER.Function(data)
 		--Containter
 		html = html..[[
 			<p id="function" style="
-				border-radius: 20px;
-				background: ]]..EXPR_WIKI.COMPILER.Settings.clrFuncBox..[[;
-				position: absolute;
-				width: ]]..(w-100)..[[px;
-				height: ]]..offset..[[px;
-				top: 50px;
-				left: 50px;
+				border-radius: 20px
+				background: ]]..EXPR_WIKI.COMPILER.Settings.clrFuncBox..[[
+				position: absolute
+				width: ]]..(w-100)..[[px
+				height: ]]..offset..[[px
+				top: 50px
+				left: 50px
 			">
 		]]
 		
@@ -168,23 +168,23 @@ function EXPR_WIKI.COMPILER.Function(data)
 		if side == "shared" then
 			html = html..[[
 				<p id="side" style="
-					border-radius: 5px 0px 0px 5px;
-					background: #f80;
-					position: absolute;
-					width: 10px;
-					height: 20px;
-					top: 65px;
-					left: 65px;"
+					border-radius: 5px 0px 0px 5px
+					background: #f80
+					position: absolute
+					width: 10px
+					height: 20px
+					top: 65px
+					left: 65px"
 				>
 				
 				<p id="side_2" style="
-					border-radius: 0px 5px 5px 0px;
-					background: #08f;
-					position: absolute;
-					width: 10px;
-					height: 20px;
-					top: 65px;
-					left: 75px;"
+					border-radius: 0px 5px 5px 0px
+					background: #08f
+					position: absolute
+					width: 10px
+					height: 20px
+					top: 65px
+					left: 75px"
 				>
 			]]
 		else
@@ -195,13 +195,13 @@ function EXPR_WIKI.COMPILER.Function(data)
 			
 			html = html..[[
 				<p id="side" style="
-					border-radius: 5px;
-					background: ]]..color..[[;
-					position: absolute;
-					width: 20px;
-					height: 20px;
-					top: 65px;
-					left: 65px;"
+					border-radius: 5px
+					background: ]]..color..[[
+					position: absolute
+					width: 20px
+					height: 20px
+					top: 65px
+					left: 65px"
 				>
 			]]
 		end
@@ -211,10 +211,10 @@ function EXPR_WIKI.COMPILER.Function(data)
 		
 		html = html..[[
 			<p id="function_text" style="
-				position: absolute;
-				top: 65px;
-				left: 95px;
-				font-family: ]]..EXPR_WIKI.COMPILER.Settings.fontCode..[[;"
+				position: absolute
+				top: 65px
+				left: 95px
+				font-family: ]]..EXPR_WIKI.COMPILER.Settings.fontCode..[["
 			>]]..funcName.."( "
 		
 		local arg = ""
@@ -249,10 +249,10 @@ function EXPR_WIKI.COMPILER.Function(data)
 	if desc then
 		html = html..[[
 			<p id="desc_head" style="
-				position: absolute;
-				top: ]]..offset..[[px;
-				left: 50px;
-				font-size: 60px;"
+				position: absolute
+				top: ]]..offset..[[px
+				left: 50px
+				font-size: 60px"
 			>Description</p>	
 		]]
 		
@@ -280,10 +280,10 @@ function EXPR_WIKI.COMPILER.Function(data)
 			
 			html = html..[[
 				<p id="desc" style="
-					position: absolute;
-					top: ]]..offset..[[px;
-					left: 75px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..offset..[[px
+					left: 75px
+					font-size: 20px"
 				>]]..v..[[</p>
 			]]
 		end
@@ -299,10 +299,10 @@ function EXPR_WIKI.COMPILER.Function(data)
 		
 		html = html..[[
 			<p id="arg_head" style="
-				position: absolute;
-				top: ]]..offset..[[px;
-				left: 50px;
-				font-size: 60px;"
+				position: absolute
+				top: ]]..offset..[[px
+				left: 50px
+				font-size: 60px"
 			>Arguments</p>
 		]]
 		
@@ -318,28 +318,28 @@ function EXPR_WIKI.COMPILER.Function(data)
 			
 			html = html..[[
 				<p id="arg_num" style="
-					border-radius: 3px;
-					background: #aaa;
-					position: absolute;
-					top: ]]..offset..[[px;
-					left: 75px;
-					font-size: 15px;
-					color: #fff;
-					padding: 1px 6px;"
+					border-radius: 3px
+					background: #aaa
+					position: absolute
+					top: ]]..offset..[[px
+					left: 75px
+					font-size: 15px
+					color: #fff
+					padding: 1px 6px"
 				>]]..i..[[</p>
 				
 				<p id="arg_desk" style="
-					position: absolute;
-					top: ]]..(25 + offset)..[[px;
-					left: 120px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(25 + offset)..[[px
+					left: 120px
+					font-size: 20px"
 				>]]..desc..[[</p>
 				
 				<p id="arg_txt" style="
-					position: absolute;
-					top: ]]..(offset - 5)..[[px;
-					left: 100px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(offset - 5)..[[px
+					left: 100px
+					font-size: 20px"
 				>]]..type.." "..name..[[</p>
 			]]
 		end
@@ -355,10 +355,10 @@ function EXPR_WIKI.COMPILER.Function(data)
 		
 		html = html..[[
 			<p id="rtn_head" style="
-				position: absolute;
-				top: ]]..offset..[[px;
-				left: 50px;
-				font-size: 60px;"
+				position: absolute
+				top: ]]..offset..[[px
+				left: 50px
+				font-size: 60px"
 			>Returns</p>
 		]]
 		
@@ -373,28 +373,28 @@ function EXPR_WIKI.COMPILER.Function(data)
 			
 			html = html..[[
 				<p id="rtn_num" style="
-					border-radius: 3px;
-					background: #aaa;
-					position: absolute;
-					top: ]]..offset..[[px;
-					left: 75px;
-					font-size: 15px;
-					color: #fff;
-					padding: 1px 6px;"
+					border-radius: 3px
+					background: #aaa
+					position: absolute
+					top: ]]..offset..[[px
+					left: 75px
+					font-size: 15px
+					color: #fff
+					padding: 1px 6px"
 				>]]..i..[[</p>
 				
 				<p id="rtn_desk" style="
-					position: absolute;
-					top: ]]..(25 + offset)..[[px;
-					left: 120px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(25 + offset)..[[px
+					left: 120px
+					font-size: 20px"
 				>]]..desc..[[</p>
 				
 				<p id="rtn_txt" style="
-					position: absolute;
-					top: ]]..(offset - 5)..[[px;
-					left: 100px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(offset - 5)..[[px
+					left: 100px
+					font-size: 20px"
 				>]]..type..[[</p>
 			]]
 		end
@@ -447,13 +447,13 @@ function EXPR_WIKI.COMPILER.Operator(data)
 		--Containter
 		html = html..[[
 			<p id="function" style="
-				border-radius: 20px;
-				background: ]]..EXPR_WIKI.COMPILER.Settings.clrFuncBox..[[;
-				position: absolute;
-				width: ]]..(w-100)..[[px;
-				height: 50px;
-				top: 50px;
-				left: 50px;
+				border-radius: 20px
+				background: ]]..EXPR_WIKI.COMPILER.Settings.clrFuncBox..[[
+				position: absolute
+				width: ]]..(w-100)..[[px
+				height: 50px
+				top: 50px
+				left: 50px
 			">
 		]]
 		
@@ -467,23 +467,23 @@ function EXPR_WIKI.COMPILER.Operator(data)
 		if side == "shared" then
 			html = html..[[
 				<p id="side" style="
-					border-radius: 5px 0px 0px 5px;
-					background: #f80;
-					position: absolute;
-					width: 10px;
-					height: 20px;
-					top: 65px;
-					left: 65px;"
+					border-radius: 5px 0px 0px 5px
+					background: #f80
+					position: absolute
+					width: 10px
+					height: 20px
+					top: 65px
+					left: 65px"
 				>
 				
 				<p id="side_2" style="
-					border-radius: 0px 5px 5px 0px;
-					background: #08f;
-					position: absolute;
-					width: 10px;
-					height: 20px;
-					top: 65px;
-					left: 75px;"
+					border-radius: 0px 5px 5px 0px
+					background: #08f
+					position: absolute
+					width: 10px
+					height: 20px
+					top: 65px
+					left: 75px"
 				>
 			]]
 		else
@@ -494,13 +494,13 @@ function EXPR_WIKI.COMPILER.Operator(data)
 			
 			html = html..[[
 				<p id="side" style="
-					border-radius: 5px;
-					background: ]]..color..[[;
-					position: absolute;
-					width: 20px;
-					height: 20px;
-					top: 65px;
-					left: 65px;"
+					border-radius: 5px
+					background: ]]..color..[[
+					position: absolute
+					width: 20px
+					height: 20px
+					top: 65px
+					left: 65px"
 				>
 			]]
 		end
@@ -510,10 +510,10 @@ function EXPR_WIKI.COMPILER.Operator(data)
 		
 		html = html..[[
 			<p id="function_text" style="
-				position: absolute;
-				top: 65px;
-				left: 95px;
-				font-family: ]]..EXPR_WIKI.COMPILER.Settings.fontCode..[[;"
+				position: absolute
+				top: 65px
+				left: 95px
+				font-family: ]]..EXPR_WIKI.COMPILER.Settings.fontCode..[["
 			>]]..funcName.."</p>"
 		
 		offset = offset + 40
@@ -525,10 +525,10 @@ function EXPR_WIKI.COMPILER.Operator(data)
 	if desc then
 		html = html..[[
 			<p id="desc_head" style="
-				position: absolute;
-				top: ]]..offset..[[px;
-				left: 50px;
-				font-size: 60px;"
+				position: absolute
+				top: ]]..offset..[[px
+				left: 50px
+				font-size: 60px"
 			>Description</p>	
 		]]
 		
@@ -556,10 +556,10 @@ function EXPR_WIKI.COMPILER.Operator(data)
 			
 			html = html..[[
 				<p id="desc" style="
-					position: absolute;
-					top: ]]..offset..[[px;
-					left: 75px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..offset..[[px
+					left: 75px
+					font-size: 20px"
 				>]]..v..[[</p>
 			]]
 		end
@@ -575,10 +575,10 @@ function EXPR_WIKI.COMPILER.Operator(data)
 		
 		html = html..[[
 			<p id="rtn_head" style="
-				position: absolute;
-				top: ]]..offset..[[px;
-				left: 50px;
-				font-size: 60px;"
+				position: absolute
+				top: ]]..offset..[[px
+				left: 50px
+				font-size: 60px"
 			>Returns</p>
 		]]
 		
@@ -593,28 +593,28 @@ function EXPR_WIKI.COMPILER.Operator(data)
 			
 			html = html..[[
 				<p id="rtn_num" style="
-					border-radius: 3px;
-					background: #aaa;
-					position: absolute;
-					top: ]]..offset..[[px;
-					left: 75px;
-					font-size: 15px;
-					color: #fff;
-					padding: 1px 6px;"
+					border-radius: 3px
+					background: #aaa
+					position: absolute
+					top: ]]..offset..[[px
+					left: 75px
+					font-size: 15px
+					color: #fff
+					padding: 1px 6px"
 				>]]..i..[[</p>
 				
 				<p id="rtn_desk" style="
-					position: absolute;
-					top: ]]..(25 + offset)..[[px;
-					left: 120px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(25 + offset)..[[px
+					left: 120px
+					font-size: 20px"
 				>]]..desc..[[</p>
 				
 				<p id="rtn_txt" style="
-					position: absolute;
-					top: ]]..(offset - 5)..[[px;
-					left: 100px;
-					font-size: 20px;"
+					position: absolute
+					top: ]]..(offset - 5)..[[px
+					left: 100px
+					font-size: 20px"
 				>]]..type..[[</p>
 			]]
 		end

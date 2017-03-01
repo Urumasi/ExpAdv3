@@ -10,72 +10,72 @@
 	::Context::
 ]]
 
-AddCSLuaFile();
+AddCSLuaFile()
 
-local CONTEXT = {};
+local CONTEXT = {}
 
-CONTEXT.__index = CONTEXT;
+CONTEXT.__index = CONTEXT
 
 --[[
 	Error messages and tracing.
 ]]
 
 function CONTEXT.Trace(this, level, max)
-	local stack = {};
+	local stack = {}
 
 	for i = level + 1, level + max do
-		local info = debug.getinfo( i, "Sln" );
+		local info = debug.getinfo( i, "Sln" )
 		
-		if (not info) then
-			continue;
+		if not info then
+			continue
 		end
 
-		if (info.short_src == "Expression 3") then
-			local trace = this:GetScriptPos(info.currentline, 0);
+		if info.short_src == "Expression 3" then
+			local trace = this:GetScriptPos(info.currentline, 0)
 
-			if (trace) then
-				trace.level = #stack + 1;
-				stack[trace.level] = trace;
+			if trace then
+				trace.level = #stack + 1
+				stack[trace.level] = trace
 			end
 		end
 	end
 
-	return stack;
+	return stack
 end
 
 function CONTEXT.GetScriptPos(this, line, char)
 	for _, a in pairs(this.traceTable) do
-		if (a.native_line >= line) then
-			return{a.e3_line, a.e3_char};
+		if a.native_line >= line then
+			return{a.e3_line, a.e3_char}
 		end
 	end
 
-	return nil;
+	return nil
 end
 
 function CONTEXT.Throw(this, msg, fst, ...)
-	if (fst) then
-		msg = string.format(msg, fst, ...);
+	if fst then
+		msg = string.format(msg, fst, ...)
 	end
 	
-	local err = {};
-	err.state = "runtime";
-	err.char = 0;
-	err.line = 0;
-	err.msg = msg;
+	local err = {}
+	err.state = "runtime"
+	err.char = 0
+	err.line = 0
+	err.msg = msg
 
-	err.stack = this:Trace(1, 15);
+	err.stack = this:Trace(1, 15)
 
-	if (err.stack) then
-		local trace = err.stack[1];
+	if err.stack then
+		local trace = err.stack[1]
 		
-		if (trace) then
-			err.line = trace[1];
-			err.char = trace[2];
+		if trace then
+			err.line = trace[1]
+			err.char = trace[2]
 		end
 	end
 
-	error(err, 0);
+	error(err, 0)
 end
 
 --[[
@@ -83,14 +83,14 @@ end
 ]]
 
 function CONTEXT.New()
-	local tbl = {};
+	local tbl = {}
 
-	tbl.cpu_total = 0;
-	tbl.cpu_average = 0;
-	tbl.cpu_samples = {};
-	tbl.cpu_warning = false;
+	tbl.cpu_total = 0
+	tbl.cpu_average = 0
+	tbl.cpu_samples = {}
+	tbl.cpu_warning = false
 	
-	return setmetatable(tbl, CONTEXT);
+	return setmetatable(tbl, CONTEXT)
 end
 
 
@@ -99,31 +99,31 @@ end
 	Measure: 1000th's of a second.
 ]]
 
-local len = 100;
-local soft, hard;
+local len = 100
+local soft, hard
 
-if (SERVER) then
-	soft = CreateConVar("e3_hardquota", 500, { FCVAR_REPLICATED }, "Absolute max usage quota per one tick.");
-	hard = CreateConVar("e3_softquota", 100, { FCVAR_REPLICATED }, "The max average usage quota.");
-	--len = CreateConVar("e3_maxbuffersize", 100, { FCVAR_REPLICATED }, "Window width of the CPU time quota moving average.");
+if SERVER then
+	soft = CreateConVar("e3_hardquota", 500, { FCVAR_REPLICATED }, "Absolute max usage quota per one tick.")
+	hard = CreateConVar("e3_softquota", 100, { FCVAR_REPLICATED }, "The max average usage quota.")
+	--len = CreateConVar("e3_maxbuffersize", 100, { FCVAR_REPLICATED }, "Window width of the CPU time quota moving average.")
 end
 
-if (CLIENT) then
-	soft = CreateClientConVar("e3_hardquota", 500, false, false);
-	hard = CreateClientConVar("e3_softquota", 100, false, false); 
-	--len = CreateClientConVar("e3_maxbuffersize", 100, false, false);
+if CLIENT then
+	soft = CreateClientConVar("e3_hardquota", 500, false, false)
+	hard = CreateClientConVar("e3_softquota", 100, false, false) 
+	--len = CreateClientConVar("e3_maxbuffersize", 100, false, false)
 end
 
 function CONTEXT:MaxSampleSize()
-	return len; -- len:GetInt();
+	return len -- len:GetInt()
 end
 
 function CONTEXT:GetSoftQuota()
-	return soft:GetInt() * 0.0001;
+	return soft:GetInt() * 0.0001
 end
 
 function CONTEXT:GetHardQuota()
-	return hard:GetInt() * 0.0001;
+	return hard:GetInt() * 0.0001
 end
 
 --
@@ -131,76 +131,76 @@ end
 function CONTEXT:AddSample(sample)
 	local samples, size = self.cpu_samples, #self.cpu_samples
 		
-	if (size >= self:MaxSampleSize()) then
+	if size >= self:MaxSampleSize() then
 		for i = 1, size do
-			samples[i] = samples[i + 1];
+			samples[i] = samples[i + 1]
 		end -- Move all samples down 1.
 	end
 
-	samples[size] = sample;
+	samples[size] = sample
 
-	return size;
+	return size
 end
 
 function CONTEXT:GetBufferAverage()
-	local average = 0;
-	local samples = #self.cpu_samples;
+	local average = 0
+	local samples = #self.cpu_samples
 
 	for i = 1, samples do
-		average = average + self.cpu_samples[i];
+		average = average + self.cpu_samples[i]
 	end
 
-	return average / samples;
+	return average / samples
 end
 
 function CONTEXT:GetBufferVariance(average)
-	local average = average or self:GetBufferAverage();
+	local average = average or self:GetBufferAverage()
 
-	local sum = 0;
-	local samples = #self.cpu_samples;
+	local sum = 0
+	local samples = #self.cpu_samples
 
 	for i = 1, samples do
-		sum = sum + (self.cpu_samples[i] - average) ^ 2;
+		sum = sum + (self.cpu_samples[i] - average) ^ 2
 	end
 
-	return sum / (samples - 1);
+	return sum / (samples - 1)
 end
 
 --
 
 
 function CONTEXT:UpdateQuotaValues()
-	if (self.status) then
+	if self.status then
 
 		local average = self:GetBufferAverage()
 
-		local hard = self:GetHardQuota();
+		local hard = self:GetHardQuota()
 		
 		if self.cpu_warning then
 			if self.cpu_total < hard * 0.75 then
-				self.cpu_warning = false;
+				self.cpu_warning = false
 			end
 		end
 
-		self.cpu_total = 0;
+		self.cpu_total = 0
 
-		self.cpu_average = average;
+		self.cpu_average = average
 	end
 
-	if (r and self.update) then
-		self.context.update = false;
-		hook.Run("Expression3.Entity.Update", self, context);
+	if r and self.update then
+		self.context.update = false
+		hook.Run("Expression3.Entity.Update", self, context)
 	end
 end
 
 --[[
 ]]
 
-local bJit, fdhk, sdhk, ndhk;
+local bJit, fdhk, sdhk, ndhk
 
 function CONTEXT:PreExecute()
 
-	local cpuMarker = SysTime();
+	local cpuMarker = SysTime()
 
 	-- http://www.usablestats.com/calcs/tinv
 	-- Degrees of Freedom = BufferN - 1
@@ -209,54 +209,54 @@ function CONTEXT:PreExecute()
 	-- A higher significance means it is harder to quota but you are more sure that the limit has been exceeded.
 	-- A lower significance means it is easier to quota but you are less sure that the limit has been exceeded.
 	-- The default value for x is 0.99
-	local criticalValue = 2.3646;
+	local criticalValue = 2.3646
 
 	local cpuCheck = function()
-		local dt = SysTime() - cpuMarker;
+		local dt = SysTime() - cpuMarker
 
-		local samples = self:AddSample(dt);
+		local samples = self:AddSample(dt)
 
-		local average = self:GetBufferAverage();
+		local average = self:GetBufferAverage()
 
-		local variance = self:GetBufferVariance(average);
+		local variance = self:GetBufferVariance(average)
 
-		local soft = self:GetSoftQuota();
+		local soft = self:GetSoftQuota()
 
-		local hard = self:GetHardQuota();
+		local hard = self:GetHardQuota()
 
-		local statistic = (average - soft) / math.sqrt(variance / samples);
+		local statistic = (average - soft) / math.sqrt(variance / samples)
 
-		self.cpu_total = self.cpu_total + dt;
+		self.cpu_total = self.cpu_total + dt
 
 		if statistic > criticalValue then
-			debug.sethook( nil );
-			self:Throw( "Soft CPU Quota Exceeded!");
+			debug.sethook( nil )
+			self:Throw( "Soft CPU Quota Exceeded!")
 		elseif self.cpu_total > hard then
-			debug.sethook( nil );
-			self:Throw( "Hard CPU Quota Exceeded!");
+			debug.sethook( nil )
+			self:Throw( "Hard CPU Quota Exceeded!")
 		elseif self.cpu_total > hard * 0.75 then
-			self.cpu_warning = true;
+			self.cpu_warning = true
 		end
 
-		cpuMarker = SysTime();
+		cpuMarker = SysTime()
 	end
 
-	bJit = jit.status();
+	bJit = jit.status()
 
-	jit.off();
+	jit.off()
 
-	fdhk, sdhk, ndhk = debug.gethook();
+	fdhk, sdhk, ndhk = debug.gethook()
 
-	debug.sethook(cpuCheck, "", 500);
+	debug.sethook(cpuCheck, "", 500)
 end
 
 function CONTEXT:PostExecute()
-	debug.sethook(fdhk, sdhk, ndhk);
+	debug.sethook(fdhk, sdhk, ndhk)
 
-	if (bJit) then
-		jit.on();
+	if bJit then
+		jit.on()
 	end
 end
 
 
-EXPR_CONTEXT = CONTEXT;
+EXPR_CONTEXT = CONTEXT

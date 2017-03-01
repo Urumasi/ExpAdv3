@@ -313,7 +313,7 @@ function PANEL:_OnKeyCodeTyped( code )
 			local old_scroll = self.Scroll:Clone( )
 
 			local str = self:GetSelection( )
-			if ( str != "" ) then -- If you have a selection
+			if  str != ""  then -- If you have a selection
 				self:SetSelection( str:rep( 2 ) ) -- Repeat it
 			else -- If you don't
 				-- Select the current line
@@ -546,7 +546,7 @@ function PANEL:_OnTextChanged( )
 	local text = self.pTextEntry:GetValue( )
 	self.pTextEntry:SetText( "" )
 	
-	if ( input_IsKeyDown( KEY_LCONTROL ) or input_IsKeyDown( KEY_RCONTROL ) ) and not ( input_IsKeyDown( KEY_LALT ) or input_IsKeyDown( KEY_RALT ) ) then
+	if  input_IsKeyDown( KEY_LCONTROL ) or input_IsKeyDown( KEY_RCONTROL ) ) and not ( input_IsKeyDown( KEY_LALT ) or input_IsKeyDown( KEY_RALT )  then
 		-- ctrl+[shift+]key
 		if input_IsKeyDown( KEY_V ) then
 			-- ctrl+[shift+]V

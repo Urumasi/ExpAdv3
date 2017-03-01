@@ -18,7 +18,7 @@ local PANEL = { }
 local sDefaultScript = [[/*-----------------------------
 	Expression 3 - Alpha
 -----------------------------*/
-@name "Generic - Expression 3";
+@name "Generic - Expression 3"
 
 function void first() {
 	//same as if first.
@@ -28,11 +28,11 @@ function void main() {
 	//same as run on tick.
 }
 
-first();
-main();
+first()
+main()
 
 //register main event for every think.
-event.add("Think", "Main", main);
+event.add("Think", "Main", main)
 
 //For more on E3 and its development visit:
 //https://github.com/Rusketh/ExpAdv3/
@@ -308,7 +308,7 @@ end
 Console
 ---------------------------------------------------------------------------*/
 function PANEL:HideConsole()
-	if (self.bConsoleVisible) then
+	if self.bConsoleVisible then
 		self.tbConsoleHolder:SetTall( 22 )
 		self.tbConsoleEditor:SetVisible(false)
 		self.bConsoleVisible = false
@@ -316,99 +316,99 @@ function PANEL:HideConsole()
 end
 
 function PANEL:ShowConsole()
-	if (not self.bConsoleVisible) then
+	if not self.bConsoleVisible then
 		self.tbConsoleHolder:SetTall( 150 )
 		self.tbConsoleEditor:SetVisible(true)
-		self.bConsoleVisible = true;
+		self.bConsoleVisible = true
 	end
 end
 
 
 --[[function PANEL:AddPrintOut(...)
-	local row = {};
-	local line = "";
-	local token = "";
-	local color = Color(255, 255, 255);
+	local row = {}
+	local line = ""
+	local token = ""
+	local color = Color(255, 255, 255)
 	
 	for k, v in pairs({...}) do
-		if (istable(v)) then
-			row[#row + 1] = {token, color};
-			token = "";
-			color = v;
+		if istable(v) then
+			row[#row + 1] = {token, color}
+			token = ""
+			color = v
 		else
-			v = tostring(v);
-			line = line .. v;
-			token = token .. v;
+			v = tostring(v)
+			line = line .. v
+			token = token .. v
 		end
 	end
 	
 	row[#row + 1] = {token, color}
 	
 	self.tbConsoleRows[#self.tbConsoleRows + 1] = row
-	self.tbConsoleEditor:SetCaret(Vector2( #self.tbConsoleEditor.Rows, 1 ));
-	self.tbConsoleEditor:SetSelection(line .. "\n");
+	self.tbConsoleEditor:SetCaret(Vector2( #self.tbConsoleEditor.Rows, 1 ))
+	self.tbConsoleEditor:SetSelection(line .. "\n")
 end]]
 
 function PANEL:PrintLine(...)
-	local r = {};
-	local l = "";
-	local c = Color(255, 255, 255);
+	local r = {}
+	local l = ""
+	local c = Color(255, 255, 255)
 	
 	for k, v in pairs({...}) do
 		
-		if (istable(v)) then
-			c = v;
-			continue;
+		if istable(v) then
+			c = v
+			continue
 		end
 		
-		l = l .. v;
+		l = l .. v
 		
-		r[#r + 1] = {v, c};
+		r[#r + 1] = {v, c}
 	end
 	
 	self.tbConsoleRows[#self.tbConsoleRows + 1] = r
 	
-	self.tbConsoleEditor:SetCaret(Vector2( #self.tbConsoleEditor.Rows, 1 ));
+	self.tbConsoleEditor:SetCaret(Vector2( #self.tbConsoleEditor.Rows, 1 ))
 	
-	self.tbConsoleEditor:SetSelection(l .. "\n");
+	self.tbConsoleEditor:SetSelection(l .. "\n")
 end
 
 function PANEL:AddPrintOut(...)
-	local r = {};
-	local c = Color(255, 255, 255);
+	local r = {}
+	local c = Color(255, 255, 255)
 	
 	for k, v in pairs({...}) do
-		if (istable(v)) then
-			c = v;
-			r[#r + 1] = v;
-			continue;
+		if istable(v) then
+			c = v
+			r[#r + 1] = v
+			continue
 		end
 		
-		if (not isstring(v)) then
-			v = tostring(v);
+		if not isstring(v) then
+			v = tostring(v)
 		end
 		
-		local lines = string.Explode("\n", v);
+		local lines = string.Explode("\n", v)
 		
-		if (#lines == 1) then
-			r[#r + 1] = v;
-			continue;
+		if #lines == 1 then
+			r[#r + 1] = v
+			continue
 		end
 		
-		r[#r + 1] = lines[1];
+		r[#r + 1] = lines[1]
 		
-		self:PrintLine(unpack(r));
+		self:PrintLine(unpack(r))
 		
-		if (#lines > 2) then
+		if #lines > 2 then
 			for i = 2, #lines - 1 do
-				self:PrintLine(c, lines[i]);
+				self:PrintLine(c, lines[i])
 			end
 		end
 		
 		r = {c, lines[#lines]}
 	end
 	
-	self:PrintLine(unpack(r));
+	self:PrintLine(unpack(r))
 end
 
 /*---------------------------------------------------------------------------
@@ -738,7 +738,7 @@ function PANEL:SaveTabs( )
 		strtabs[#strtabs+1] = FilePath 
 	end
 	
-	file.Write( "golem_temp/_tabs_.txt", table.concat( strtabs, ";" ) ) 
+	file.Write( "golem_temp/_tabs_.txt", table.concat( strtabs, "" ) ) 
 end
 
 function PANEL:OpenOldTabs( )
@@ -749,7 +749,7 @@ function PANEL:OpenOldTabs( )
 	-- local tabs = file.Read( "golem/_tabs_.txt" )
 	if not tabs or tabs == "" then return false end
 	
-	tabs = string.Explode( ";", tabs )
+	tabs = string.Explode( "", tabs )
 	if not tabs or #tabs == 0 then return false end
 	
 	local opentabs = false
@@ -822,55 +822,55 @@ function PANEL:DoValidate( Goto, Code, Debug )
 		return false
 	end
 	
-	local t = EXPR_TOKENIZER.New();
+	local t = EXPR_TOKENIZER.New()
 	
-	t:Initalize("EXPADV", Code);
+	t:Initalize("EXPADV", Code)
 	
-	local ts, tr = t:Run();
+	local ts, tr = t:Run()
 	
-	if (not ts) then
-		if (tr.state == "internal") then
+	if not ts then
+		if tr.state == "internal" then
 			self:OnValidateError( false, "Internal tokenizer error (see console)." )
 			Golem.Print(Color(255, 255, 255), "Internal tokenizer error: ", tr.msg)
 		else
 			self:OnValidateError( Goto, tr )
 		end
 		
-		return false;
+		return false
 	end
 	
-	local p = EXPR_PARSER.New();
+	local p = EXPR_PARSER.New()
 	
-	p:Initalize(tr);
+	p:Initalize(tr)
 	
-	local ps, pr = p:Run();
+	local ps, pr = p:Run()
 	
-	if (not ps) then
-		if (pr.state == "internal") then
+	if not ps then
+		if pr.state == "internal" then
 			self:OnValidateError( false, "Internal parser error (see console)." )
 			Golem.Print(Color(255, 255, 255), "Internal parser error: ", pr.msg)
 		else
 			self:OnValidateError( Goto, pr )
 		end
 		
-		return false;
+		return false
 	end
 	
-	local c = EXPR_COMPILER.New();
+	local c = EXPR_COMPILER.New()
 	
-	c:Initalize(pr);
+	c:Initalize(pr)
 	
-	local cs, cr = c:Run();
+	local cs, cr = c:Run()
 	
-	if (not cs) then
-		if (cr.state == "internal") then
+	if not cs then
+		if cr.state == "internal" then
 			self:OnValidateError( false, "Internal compiler error (see console)." )
 			Golem.Print(Color(255, 255, 255), "Internal compiler error: ", cr.msg)
 		else
 			self:OnValidateError( Goto, cr )
 		end
 		
-		return false;
+		return false
 	end
 	
 	self.btnValidate:SetColor( Color( 50, 255, 50 ) )
@@ -878,18 +878,18 @@ function PANEL:DoValidate( Goto, Code, Debug )
 	
 	self:AddPrintOut(Color(0,255,0), "Validation Successful!" )
 	
-	if (Debug) then
-		EXPR_LIB.ShowDebug(tr.tokens, pr.tasks);
+	if Debug then
+		EXPR_LIB.ShowDebug(tr.tokens, pr.tasks)
 	end
 	
 	return true
 end
 
 function PANEL:OnValidateError( Goto, Thrown )
-	local Error;
+	local Error
 	
-	if (istable(Thrown)) then
-		Error = string.format("%s, at line %i char %i.", Thrown.msg, Thrown.line, Thrown.char);
+	if istable(Thrown) then
+		Error = string.format("%s, at line %i char %i.", Thrown.msg, Thrown.line, Thrown.char)
 	else
 		Error = Thrown
 		Thrown = nil

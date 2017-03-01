@@ -105,7 +105,7 @@ function Golem.GetDirective( directive )
 		local code = Golem.Instance:GetCode( ) or ""
 		
 		if string.find( code, directive ) then 
-			code = string.Replace(code,";","\n")
+			code = string.Replace(code,"","\n")
 			local lines = string.Explode( "\n", code )
 			local i = 1
 			

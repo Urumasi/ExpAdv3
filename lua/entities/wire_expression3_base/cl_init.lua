@@ -10,34 +10,34 @@
 	::Expression 3 Base::
 ]]
 
-print("expr3->cl_init");
-include("shared.lua");
+print("expr3->cl_init")
+include("shared.lua")
 
 --[[
 ]]
 
 net.Receive("Expression3.RequestUpload", function(len)
-	local ent = net.ReadEntity();
+	local ent = net.ReadEntity()
 
 	timer.Create("Expression3.SubmitToServer", 1, 1, function()
-		if (IsValid(ent) and ent.SubmitToServer) then
-			ent:SubmitToServer(Golem.GetCode());
+		if IsValid(ent) and ent.SubmitToServer then
+			ent:SubmitToServer(Golem.GetCode())
 		end
-	end);
+	end)
 end)
 
 function ENT:SubmitToServer(code)
-	if (code and code ~= "") then
-		local ok, res = self:Validate(code);
+	if code and code ~= "" then
+		local ok, res = self:Validate(code)
 
-		if (ok) then
-			net.Start("Expression3.SubmitToServer");
-				net.WriteEntity(self);
-				net.WriteString(code);
-			net.SendToServer();
+		if ok then
+			net.Start("Expression3.SubmitToServer")
+				net.WriteEntity(self)
+				net.WriteString(code)
+			net.SendToServer()
 		else
-			self:HandelThrown(res);
-			chat.AddText("Failed to validate script (see console).");
+			self:HandelThrown(res)
+			chat.AddText("Failed to validate script (see console).")
 		end
 	end
 end
@@ -46,25 +46,25 @@ end
 ]]
 
 net.Receive("Expression3.SendToClient", function(len)
-	local ent = net.ReadEntity();
-	local ply = net.ReadEntity();
-	local script = net.ReadString();
+	local ent = net.ReadEntity()
+	local ply = net.ReadEntity()
+	local script = net.ReadString()
 
-	if (script and script ~= "") then
-		if (ent and IsValid(ent) and ent.ReceiveFromServer) then
-			if (ply and IsValid(ply)) then
-				ent:ReceiveFromServer(ply, script);
+	if script and script ~= "" then
+		if ent and IsValid(ent) and ent.ReceiveFromServer then
+			if ply and IsValid(ply) then
+				ent:ReceiveFromServer(ply, script)
 			end
 		end
 	end
-end);
+end)
 
 function ENT:ReceiveFromServer(ply, script)
 	timer.Simple(1, function()
-		if (IsValid(self)) then
-			self:SetCode(script, true);
+		if IsValid(self) then
+			self:SetCode(script, true)
 		end
-	end);
+	end)
 end
 
 function ENT:PostInitScript()
@@ -85,19 +85,19 @@ function ENT:GetOverlayData()
 		"CL average: " .. self:GetClientAverageCPU(),
 		"CL total:" .. self:GetClientTotalCPU(),
 		"CL warning:" .. tostring(self:GetClientWarning()),
-	}, "\n")};
+	}, "\n")}
 end
 
 --[[
 ]]
 
 function ENT:SendToOwner(bConsole, ...)
-	local owner = self:GetPlayer();
+	local owner = self:GetPlayer()
 
-	if (owner == LocalPlayer()) then
-		Golem.Print(...);
+	if owner == LocalPlayer() then
+		Golem.Print(...)
 	else
-		local const = bConsole and EXPR_CONSOLE or EXPR_CHAT;
-		EXPR_LIB.SendToClient(owner, self, const, ...);
+		local const = bConsole and EXPR_CONSOLE or EXPR_CHAT
+		EXPR_LIB.SendToClient(owner, self, const, ...)
 	end
 end

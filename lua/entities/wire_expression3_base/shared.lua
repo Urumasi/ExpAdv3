@@ -10,89 +10,89 @@
 	::Expression 3 Base::
 ]]
 
-AddCSLuaFile();
+AddCSLuaFile()
 
-include("sh_cppi.lua");
-include("sh_context.lua");
+include("sh_cppi.lua")
+include("sh_context.lua")
 
-ENT.Type 			= "anim";
-ENT.Base 			= "base_wire_entity";
+ENT.Type 			= "anim"
+ENT.Base 			= "base_wire_entity"
 
-ENT.PrintName       = "Expression 3";
-ENT.Author          = "Rusketh";
-ENT.Contact         = "";
+ENT.PrintName       = "Expression 3"
+ENT.Author          = "Rusketh"
+ENT.Contact         = ""
 
-ENT.Expression3 	= true;
+ENT.Expression3 	= true
 
 --[[
 	Validate / Set Code
 ]]
 
 function ENT:Validate(script)
-	local Toker = EXPR_TOKENIZER.New();
+	local Toker = EXPR_TOKENIZER.New()
 
-	Toker:Initalize("EXPADV", script);
+	Toker:Initalize("EXPADV", script)
 
-	local ok, res = Toker:Run();
+	local ok, res = Toker:Run()
 
 	if ok then
-		local Parser = EXPR_PARSER.New();
+		local Parser = EXPR_PARSER.New()
 
-		Parser:Initalize(res);
+		Parser:Initalize(res)
 
-		ok, res = Parser:Run();
+		ok, res = Parser:Run()
 
 		if ok then
-			local Compiler = EXPR_COMPILER.New();
+			local Compiler = EXPR_COMPILER.New()
 
-			Compiler:Initalize(res);
+			Compiler:Initalize(res)
 
-			ok, res = Compiler:Run();
+			ok, res = Compiler:Run()
 		end
 	end
 
-	return ok, res;
+	return ok, res
 end
 
 function ENT:SetCode(script, run)
-	self.script = script;
+	self.script = script
 
-	local Toker = EXPR_TOKENIZER.New();
+	local Toker = EXPR_TOKENIZER.New()
 
-	Toker:Initalize("EXPADV", script);
+	Toker:Initalize("EXPADV", script)
 
-	local ok, res = self:Validate(script);
+	local ok, res = self:Validate(script)
 
-	if (not ok) then
-		self:HandelThrown(res);
+	if not ok then
+		self:HandelThrown(res)
 
-		return false;
+		return false
 	end
 
-	self.nativeScript = res.compiled;
+	self.nativeScript = res.compiled
 
-	self:BuildContext(res);
+	self:BuildContext(res)
 
-	if (SERVER) then
-		local name = "generic";
+	if SERVER then
+		local name = "generic"
 
-		if (res.directives and res.directives.name) then
-			name = res.directives.name;
+		if res.directives and res.directives.name then
+			name = res.directives.name
 		end
 
-		self:SetScriptName(name);
-		self:BuildWiredPorts(res.directives.inport, res.directives.outport);
+		self:SetScriptName(name)
+		self:BuildWiredPorts(res.directives.inport, res.directives.outport)
 	end
 
-	if (run) then
+	if run then
 		timer.Simple(1, function()
-			if (IsValid(self)) then
-				self:InitScript();
+			if IsValid(self) then
+				self:InitScript()
 			end
-		end);
+		end)
 	end
 
-	return true;
+	return true
 end
 
 --[[
@@ -100,79 +100,79 @@ end
 ]]
 
 function ENT:BuildContext(instance)
-	self.context = EXPR_CONTEXT.New();
+	self.context = EXPR_CONTEXT.New()
 
-	self.context.events = {};
-	self.context.entity = self;
-	self.context.player = self.player;
-	self.context.traceTable = instance.traceTbl;
+	self.context.events = {}
+	self.context.entity = self
+	self.context.player = self.player
+	self.context.traceTable = instance.traceTbl
 
-	self:BuildEnv(self.context, instance);
+	self:BuildEnv(self.context, instance)
 
-	EXPR_LIB.RegisterContext(self.context);
+	EXPR_LIB.RegisterContext(self.context)
 end
 
 function ENT:BuildEnv(context, instance)
 
-	local env = instance.enviroment;
+	local env = instance.enviroment
 
-	env.GLOBAL  = {};
-	env.INPUT = {};
-	env.OUTPUT = {};
-	env.SERVER = SERVER;
-	env.CLIENT = CLIENT;
-	env.CONTEXT = context;
-	env._OPS	= instance.operators;
-	env._CONST	= instance.constructors;
-	env._METH	= instance.methods;
-	env._FUN	= instance.functions;
-	env.invoke  = EXPR_LIB.Invoke;
-	env.error   = error;
-	env.pcall   = pcall;
+	env.GLOBAL  = {}
+	env.INPUT = {}
+	env.OUTPUT = {}
+	env.SERVER = SERVER
+	env.CLIENT = CLIENT
+	env.CONTEXT = context
+	env._OPS	= instance.operators
+	env._CONST	= instance.constructors
+	env._METH	= instance.methods
+	env._FUN	= instance.functions
+	env.invoke  = EXPR_LIB.Invoke
+	env.error   = error
+	env.pcall   = pcall
 
-	local meta = {};
+	local meta = {}
 
 	meta.__index = function(_, v)
-		error("Attempt to reach Lua environment " .. v, 1);
+		error("Attempt to reach Lua environment " .. v, 1)
 	end
 
 	meta.__newindex = function(_, v)
-		error("Attempt to write to lua environment " .. v, 1);
+		error("Attempt to write to lua environment " .. v, 1)
 	end 
 
-	context.env = env;
-	context.wire_in = env.INPUT;
-	context.wire_out = env.OUTPUT;
+	context.env = env
+	context.wire_in = env.INPUT
+	context.wire_out = env.OUTPUT
 
-	hook.Run("Expression3.Entity.BuildSandbox", self, context, env);
+	hook.Run("Expression3.Entity.BuildSandbox", self, context, env)
 
-	return setmetatable(env, meta);
+	return setmetatable(env, meta)
 end
 
 function ENT:InitScript()
 	local native = table.concat({
 		"return function(env)",
-		"	setfenv(1, env);",
+		"	setfenv(1, env)",
 			self.nativeScript,
 		"end",
-	}, "\n");
+	}, "\n")
 
-	self.context.__native = native;
+	self.context.__native = native
 
-	local main = CompileString(native, "Expression 3", false);
+	local main = CompileString(native, "Expression 3", false)
 
-	if (isstring(main)) then
-		self:HandelThrown(main);
-		return;
+	if isstring(main) then
+		self:HandelThrown(main)
+		return
 	end
 
-	local init = main();
+	local init = main()
 
-	hook.Run("Expression3.Entity.Start", self, self.context);
+	hook.Run("Expression3.Entity.Start", self, self.context)
 
-	self.context.status = self:Execute(init, self.context.env);
+	self.context.status = self:Execute(init, self.context.env)
 
-	self:PostInitScript();
+	self:PostInitScript()
 end
 
 --[[
@@ -180,19 +180,19 @@ end
 ]]
 
 function ENT:Execute(func, ...)
-	self.context:PreExecute();
+	self.context:PreExecute()
 
-	local results = {pcall(func, ...)};
+	local results = {pcall(func, ...)}
 
-	self.context:PostExecute();
+	self.context:PostExecute()
 
-	if (results[1]) then
-		self.context.update = true;
+	if results[1] then
+		self.context.update = true
 	else
-		self:HandelThrown(results[2]);
+		self:HandelThrown(results[2])
 	end
 
-	return unpack(results);
+	return unpack(results)
 end
 
 --[[
@@ -200,14 +200,14 @@ end
 ]]
 
 function ENT:IsRunning()
-	return (self.context and self.context.status);
+	return (self.context and self.context.status)
 end
 
 function ENT:ShutDown()
-	if (self:IsRunning()) then
-		self.context.status = false;
-		hook.Run("Expression3.Entity.Stop", self, self.context);
-		EXPR_LIB.UnregisterContext(self.context);
+	if self:IsRunning() then
+		self.context.status = false
+		hook.Run("Expression3.Entity.Stop", self, self.context)
+		EXPR_LIB.UnregisterContext(self.context)
 	end
 end
 
@@ -215,78 +215,78 @@ end
 ]]
 
 function ENT:HandelThrown(thrown)
-	self:ShutDown();
+	self:ShutDown()
 
-	if (not thrown) then
-		self:SendToOwner(true, Color(255,0,0), "Suffered an unkown error (no reason given).");
+	if not thrown then
+		self:SendToOwner(true, Color(255,0,0), "Suffered an unkown error (no reason given).")
 	end
 
-	if (isstring(thrown)) then
+	if isstring(thrown) then
 		self:SendToOwner(true,
 			Color(255,0,0), "Suffered a lua error has occured, Details:\n",
 			"    ", Color(0,255, 255), "Error: ", Color(255, 255, 255), thrown, "\n",
-			"\n");
+			"\n")
 	end
 
-	if (istable(thrown)) then
+	if istable(thrown) then
 		self:SendToOwner(true,
 			Color(255,0,0), "Suffered a ", thrown.state, " error has occured, Details:\n",
 			"    ", Color(0,255, 255), "Message: ", Color(255, 255, 255), thrown.msg, "\n",
 			"    ", Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char,
-		"\n");
+		"\n")
 	end
 
-	self:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
+	self:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).")
 end
 
 --[[
 ]]
 
 function ENT:Invoke(where, result, count, udf, ...)
-	if (self:IsRunning()) then
+	if self:IsRunning() then
 
-		if (udf and udf.op) then
+		if udf and udf.op then
 
-			if (result ~= udf.result or count ~= udf.count) then
-				self:HandelThrown("Invoked function with incorrect return type " .. result .. " expected, got " .. udf.result .. ".");
+			if result ~= udf.result or count ~= udf.count then
+				self:HandelThrown("Invoked function with incorrect return type " .. result .. " expected, got " .. udf.result .. ".")
 			end
 
-			self.context:PreExecute();
+			self.context:PreExecute()
 
-			local results = {pcall(udf.op, ...)};
+			local results = {pcall(udf.op, ...)}
 
-			local status = table.remove(results, 1);
+			local status = table.remove(results, 1)
 
-			self.context:PostExecute();
+			self.context:PostExecute()
 
-			if (status) then
-				self.context.update = true;
+			if status then
+				self.context.update = true
 				-- Moving this hook to run once per think instead.
-				-- hook.Run("Expression3.UpdateEntity", self, self.context);
+				-- hook.Run("Expression3.UpdateEntity", self, self.context)
 			else
-				self:HandelThrown(results[1]);
+				self:HandelThrown(results[1])
 			end
 
-			return staus, results;
+			return staus, results
 		end
 	end
 end
 
 function ENT:CallEvent(result, count, event, ...)
-	if (self:IsRunning()) then
-		local events = self.context.events[event];
+	if self:IsRunning() then
+		local events = self.context.events[event]
 
-		if (events) then
+		if events then
 			for id, udf in pairs(events) do
-				local where = string.format("Event.%s.%s", event, id);
+				local where = string.format("Event.%s.%s", event, id)
 				local status, results = self:Invoke(where, result, count, udf, ...)
 
-				if (not status) then
-					return false;
+				if not status then
+					return false
 				end
 
-				if (results[1] ~= nil) then
-					return true, results;
+				if results[1] ~= nil then
+					return true, results
 				end
 			end
 		end
@@ -298,45 +298,45 @@ end
 ]]
 
 function ENT:SetupDataTables()
-	self:NetworkVar("String", 0, "ScriptName");
-	self:NetworkVar("Float", 0, "ServerAverageCPU");
-	self:NetworkVar("Float", 1, "ServerTotalCPU");
-	self:NetworkVar("Bool", 1, "ServerWarning");end
+	self:NetworkVar("String", 0, "ScriptName")
+	self:NetworkVar("Float", 0, "ServerAverageCPU")
+	self:NetworkVar("Float", 1, "ServerTotalCPU")
+	self:NetworkVar("Bool", 1, "ServerWarning")end
 
-if (CLIENT) then
-	AccessorFunc(ENT, "cl_average_cpu", "ClientAverageCPU", FORCE_NUMBER);
-	AccessorFunc(ENT, "cl_total_cpu", "ClientTotalCPU", FORCE_NUMBER);
-	AccessorFunc(ENT, "cl_cpu_warning", "ClientWarning", FORCE_BOOL);
+if CLIENT then
+	AccessorFunc(ENT, "cl_average_cpu", "ClientAverageCPU", FORCE_NUMBER)
+	AccessorFunc(ENT, "cl_total_cpu", "ClientTotalCPU", FORCE_NUMBER)
+	AccessorFunc(ENT, "cl_cpu_warning", "ClientWarning", FORCE_BOOL)
 end
 
 function ENT:UpdateQuotaValues()
-	local r = self:IsRunning();
+	local r = self:IsRunning()
 
-	local context = self.context;
+	local context = self.context
 
-	if (SERVER) then
-		self:SetServerAverageCPU((r and context.cpu_average or 0) * 1000);
-		self:SetServerTotalCPU((r and context.cpu_total or 0) * 1000);
-		self:SetServerWarning(r and context.cpu_warning or false);
+	if SERVER then
+		self:SetServerAverageCPU((r and context.cpu_average or 0) * 1000)
+		self:SetServerTotalCPU((r and context.cpu_total or 0) * 1000)
+		self:SetServerWarning(r and context.cpu_warning or false)
 	end
 
-	if (CLIENT) then
-		self:SetClientAverageCPU((r and context.cpu_average or 0) * 1000);
-		self:SetClientTotalCPU((r and context.cpu_total or 0) * 1000);
-		self:SetClientWarning(r and context.cpu_warning or false);
+	if CLIENT then
+		self:SetClientAverageCPU((r and context.cpu_average or 0) * 1000)
+		self:SetClientTotalCPU((r and context.cpu_total or 0) * 1000)
+		self:SetClientWarning(r and context.cpu_warning or false)
 	end
 
-	if (r) then
-		context:UpdateQuotaValues();
+	if r then
+		context:UpdateQuotaValues()
 	end
 end
 
 function ENT:Think()
-	self:UpdateQuotaValues();
+	self:UpdateQuotaValues()
 
-	if (SERVER) then
-		self:TriggerOutputs();
+	if SERVER then
+		self:TriggerOutputs()
 	end
 
-	hook.Run("Expression3.Entity.Think", self, self.context);
+	hook.Run("Expression3.Entity.Think", self, self.context)
 end

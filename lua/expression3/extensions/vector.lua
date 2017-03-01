@@ -10,14 +10,14 @@
 	::Vector Extension::
 ]]
 
-local extension = EXPR_LIB.RegisterExtension("vector");
+local extension = EXPR_LIB.RegisterExtension("vector")
 
 --[[
 		CLASS
 ]]
 
 local function notNil(v)
-	return v ~= nil;
+	return v ~= nil
 end
 
 extension:RegisterClass("v", {"vector", "vector.3d"}, isvector, notNil)
@@ -29,136 +29,136 @@ extension:RegisterConstructor("v", "n,n,n", Vector, true) -- E3 new vector(n,n,n
 ]]
 
 extension:RegisterOperator("==", "v,v", "b", 1, function(a, b)
-	return (a.x == b.x) and (a.y == b.y) and (a.z == b.z);
-end, true);
+	return (a.x == b.x) and (a.y == b.y) and (a.z == b.z)
+end, true)
 
 extension:RegisterOperator("!=", "v,v", "b", 1, function(a, b)
-	return (a.x ~= b.x) and (a.y ~= b.y) and (a.z ~= b.z);
-end, true);
+	return (a.x ~= b.x) and (a.y ~= b.y) and (a.z ~= b.z)
+end, true)
 
 extension:RegisterOperator("<", "v,v", "b", 1, function(a, b)
-	return (a.x < b.x) and (a.y < b.y) and (a.z < b.z);
-end, true);
+	return (a.x < b.x) and (a.y < b.y) and (a.z < b.z)
+end, true)
 
 extension:RegisterOperator("<=", "v,v", "b", 1, function(a, b)
-	return (a.x <= b.x) and (a.y <= b.y) and (a.z <= b.z);
-end, true);
+	return (a.x <= b.x) and (a.y <= b.y) and (a.z <= b.z)
+end, true)
 
 extension:RegisterOperator(">", "v,v", "b", 1, function(a, b)
-	return (a.x > b.x) and (a.y > b.y) and (a.z > b.z);
-end, true);
+	return (a.x > b.x) and (a.y > b.y) and (a.z > b.z)
+end, true)
 
 extension:RegisterOperator(">=", "v,v", "b", 1, function(a, b)
-	return (a.x >= b.x) and (a.y >= b.y) and (a.z >= b.z);
-end, true);
+	return (a.x >= b.x) and (a.y >= b.y) and (a.z >= b.z)
+end, true)
 
 --[[
 ]]
 
-extension:RegisterOperator("+", "v,v", "v", 1, nil, nil);
+extension:RegisterOperator("+", "v,v", "v", 1, nil, nil)
 
-extension:RegisterOperator("-", "v,v", "v", 1, nil, nil);
+extension:RegisterOperator("-", "v,v", "v", 1, nil, nil)
 
-extension:RegisterOperator("*", "v,v", "v", 1, nil, nil);
+extension:RegisterOperator("*", "v,v", "v", 1, nil, nil)
 
 extension:RegisterOperator("/", "v,v", "v", 1, function(a, b)
-	return Vector((a.x / b.x), (a.y / b.y), (a.z / b.z));
-end, true);
+	return Vector((a.x / b.x), (a.y / b.y), (a.z / b.z))
+end, true)
 
 --[[
 ]]
 
 extension:RegisterOperator("+", "v,n", "v", 1, function(a, b)
-	return Vector((a.x + b), (a.y + b), (a.z + b));
-end, true);
+	return Vector((a.x + b), (a.y + b), (a.z + b))
+end, true)
 
 extension:RegisterOperator("-", "v,n", "v", 1, function(a, b)
-	return Vector((a.x - b), (a.y - b), (a.z - b));
-end, true);
+	return Vector((a.x - b), (a.y - b), (a.z - b))
+end, true)
 
 extension:RegisterOperator("*", "v,n", "v", 1, function(a, b)
-	return Vector((a.x * b), (a.y * b), (a.z * b));
-end, true);
+	return Vector((a.x * b), (a.y * b), (a.z * b))
+end, true)
 
 extension:RegisterOperator("/", "v,n", "v", 1, function(a, b)
-	return Vector((a.x / b), (a.y / b), (a.z / b));
-end, true);
+	return Vector((a.x / b), (a.y / b), (a.z / b))
+end, true)
 
 --[[
 ]]
 
 extension:RegisterOperator("is", "v", "b", 1, function(a)
-	return (a.x ~= 0) and (a.y ~= 0) and (a.z ~= 0);
-end, true);
+	return (a.x ~= 0) and (a.y ~= 0) and (a.z ~= 0)
+end, true)
 
 extension:RegisterOperator("not", "v", "b", 1, function(a)
-	return (a.x == 0) and (a.y == 0) and (a.z == 0);
-end, true);
+	return (a.x == 0) and (a.y == 0) and (a.z == 0)
+end, true)
 
 extension:RegisterOperator("neg", "v", "v", 1, function(a)
-	return Vector(-a.x, -a.y, -a.z);
-end, true);
+	return Vector(-a.x, -a.y, -a.z)
+end, true)
 
 --[[
 ]]
 
 extension:RegisterMethod("v", "getX", "", "n", 1, function(v)
-	return v.x;
-end, true);
+	return v.x
+end, true)
 
 extension:RegisterMethod("v", "getY", "", "n", 1, function(v)
-	return v.y;
-end, true);
+	return v.y
+end, true)
 
 extension:RegisterMethod("v", "getZ", "", "n", 1, function(v)
-	return v.z;
-end, true);
+	return v.z
+end, true)
 
 extension:RegisterMethod("v", "getXYZ", "", "n", 3, function(v)
-	return v.x, v.y, v.z;
-end, true);
+	return v.x, v.y, v.z
+end, true)
 
 --[[
 ]]
 
 extension:RegisterMethod("v", "setX", "n", "", 0, function(v,n)
-	v.x = n;
-end, true);
+	v.x = n
+end, true)
 
 extension:RegisterMethod("v", "setY", "n", "", 0, function(v,n)
-	v.y = n;
-end, true);
+	v.y = n
+end, true)
 
 extension:RegisterMethod("v", "setZ", "n", "", 0, function(v,n)
-	v.z = n;
-end, true);
+	v.z = n
+end, true)
 
 --[[
 ]]
 
 extension:RegisterMethod("v", "withX", "n", "v", 1, function(v,n)
-	return Vector(n, v.y, v.z);
-end, true);
+	return Vector(n, v.y, v.z)
+end, true)
 
 extension:RegisterMethod("v", "withY", "n", "v", 1, function(v,n)
-	return Vector(v.x, n, v.z);
-end, true);
+	return Vector(v.x, n, v.z)
+end, true)
 
 extension:RegisterMethod("v", "withZ", "n", "v", 1, function(v,n)
-	return Vector(v.x, v.y, n);
-end, true);
+	return Vector(v.x, v.y, n)
+end, true)
 
 --[[
 ]]
 
 extension:RegisterMethod("v", "clone", "", "v", 1, function(v,n)
-	return Vector(v.x, v.y, v.z);
-end, true);
+	return Vector(v.x, v.y, v.z)
+end, true)
 
 --[[
 ]]
 
-extension:RegisterMethod("v", "toAngle", "", "a", 1, Angle);
+extension:RegisterMethod("v", "toAngle", "", "a", 1, Angle)
 
 --[[
 ]]

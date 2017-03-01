@@ -26,12 +26,12 @@ extension:RegisterConstructor("a", "n,n,n", Angle, true)
 
 extension:RegisterOperator("==", "a,a", "b", 1, nil)
 
-extension:RegisterOperator("+", "a,a", "a", 1, nil, nil);
-extension:RegisterOperator("-", "a,a", "a", 1, nil, nil);
-extension:RegisterOperator("*", "a,a", "a", 1, nil, nil);
+extension:RegisterOperator("+", "a,a", "a", 1, nil, nil)
+extension:RegisterOperator("-", "a,a", "a", 1, nil, nil)
+extension:RegisterOperator("*", "a,a", "a", 1, nil, nil)
 extension:RegisterOperator("/", "a,a", "a", 1, function(a, b)
-	return Angle(a.p / b.p, a.y / b.y, a.r / b.r);
-end, true);
+	return Angle(a.p / b.p, a.y / b.y, a.r / b.r)
+end, true)
 
 --[[
 	Methods

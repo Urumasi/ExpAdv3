@@ -11,15 +11,15 @@
 	```````````
 ]]
 
-EXPR_WIKI = {};
+EXPR_WIKI = {}
 
-local loadWiki = false;
-local constructors;
-local methods;
-local functions;
-local pages;
-local operators;
-local events;
+local loadWiki = false
+local constructors
+local methods
+local functions
+local pages
+local operators
+local events
 
 --------------------------------
 
@@ -84,7 +84,7 @@ end
 --------------------------------
 
 hook.Add("Expression3.PostRegisterExtensions", "Expression3.Wiki", function()
-	loadWiki = true;
+	loadWiki = true
 	
 	constructors = {}
 	methods = {}

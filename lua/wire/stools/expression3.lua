@@ -34,7 +34,7 @@ end
 
 TOOL.ClientConVar = {
 	model = "models/nezzkryptic/e3_chip.mdl",
-	script_model = "";
+	script_model = ""
 }
 
 WireToolSetup.SetupMax(20)
@@ -43,14 +43,14 @@ WireToolSetup.BaseLang()
 duplicator.RegisterEntityClass( "wire_expression3_base", WireLib.MakeWireEnt, "Data", "code_str" )
 
 function TOOL:PostMake(ent)
-	local ply = self:GetOwner();
+	local ply = self:GetOwner()
 
-	ent.player = ply;
-	ent:SetPlayer(ply);
+	ent.player = ply
+	ent:SetPlayer(ply)
 	
-	net.Start("Expression3.RequestUpload");
-		net.WriteEntity(ent);
-	net.Send(ply);
+	net.Start("Expression3.RequestUpload")
+		net.WriteEntity(ent)
+	net.Send(ply)
 end
 
 local GateModels = {
@@ -64,22 +64,22 @@ local GateModels = {
 	"models/expression 2/cpu_interface.mdl",
 	"models/expression 2/cpu_microchip.mdl",
 	"models/expression 2/cpu_processor.mdl",
-};
+}
 
 function TOOL:GetModel()
-	local script_model = self:GetClientInfo("script_model");
+	local script_model = self:GetClientInfo("script_model")
 
-	if (script_model and script_model ~= "") then
-		if (self:CheckValidModel(script_model)) then
-			return script_model;
+	if script_model and script_model ~= "" then
+		if self:CheckValidModel(script_model) then
+			return script_model
 		end
 	end
 
-	return WireToolObj.GetModel(self);
+	return WireToolObj.GetModel(self)
 end
 
 if CLIENT then
-	local TOOL = TOOL;
+	local TOOL = TOOL
 
 	function TOOL.BuildCPanel( CPanel )
 
@@ -95,19 +95,19 @@ if CLIENT then
 	end
 
 	hook.Add("Expression3.CloseGolem", "Expression3.Tool.ChooseModel", function()
-		local model = Golem.GetDirective("model") or "";
-		RunConsoleCommand( "wire_expression3_script_model", model);
+		local model = Golem.GetDirective("model") or ""
+		RunConsoleCommand( "wire_expression3_script_model", model)
 		MsgN("E3 - Closed editor got model ", model)
 	end)
 end
 
 function TOOL:RightClick( Trace )
-	if (SERVER) then
+	if SERVER then
 		self:GetOwner():SendLua( [[
-		if (Golem) then
-			local editor = Golem.GetInstance();
-			editor:SetVisible(true);
-			editor:MakePopup();
-		end]]);
+		if Golem then
+			local editor = Golem.GetInstance()
+			editor:SetVisible(true)
+			editor:MakePopup()
+		end]])
 	end
 end

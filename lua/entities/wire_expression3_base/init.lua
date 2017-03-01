@@ -10,62 +10,62 @@
 	::Expression 3 Base::
 ]]
 
-AddCSLuaFile("cl_init.lua");
-include("shared.lua");
+AddCSLuaFile("cl_init.lua")
+include("shared.lua")
 
 --[[
 ]]
 
 net.Receive("Expression3.SubmitToServer", function(len, ply)
-	local ent = net.ReadEntity();
-	local script = net.ReadString();
+	local ent = net.ReadEntity()
+	local script = net.ReadString()
 
-	if (IsValid(ent) and ent.ReceiveFromClient) then
-		ent:ReceiveFromClient(ply, script);
+	if IsValid(ent) and ent.ReceiveFromClient then
+		ent:ReceiveFromClient(ply, script)
 	end	
 end)
 
 function ENT:ReceiveFromClient(ply, script)
-	if (self:CanSetCode(ply)) then
+	if self:CanSetCode(ply) then
 		timer.Simple(1, function()
-			if (IsValid(self)) then
-				self:SetCode(script, true);
+			if IsValid(self) then
+				self:SetCode(script, true)
 			end
-		end);
+		end)
 	end
 end
 
 function ENT:PostInitScript()
-	print("Broadcasting to clients:");
+	print("Broadcasting to clients:")
 	net.Start("Expression3.SendToClient")
-		net.WriteEntity(self);
-		net.WriteEntity(self.context.player);
-		net.WriteString(self.script);
-	net.Broadcast();
+		net.WriteEntity(self)
+		net.WriteEntity(self.context.player)
+		net.WriteString(self.script)
+	net.Broadcast()
 end
 
 --[[
 ]]
 
 function ENT:CanSetCode(ply)
-	return true; -- TODO: Make this do somthing more secure.
+	return true -- TODO: Make this do somthing more secure.
 end
 
 --[[
 ]]
 
 function ENT:Initialize( )
-	self:PhysicsInit(SOLID_VPHYSICS);
-	self:SetMoveType(MOVETYPE_VPHYSICS);
-	self:SetSolid(SOLID_VPHYSICS);
+	self:PhysicsInit(SOLID_VPHYSICS)
+	self:SetMoveType(MOVETYPE_VPHYSICS)
+	self:SetSolid(SOLID_VPHYSICS)
 end
 
 --[[
 ]]
 
 function ENT:SendToOwner(bConsole, ...)
-	local const = bConsole and EXPR_CONSOLE or EXPR_CHAT;
-	EXPR_LIB.SendToPlayer(self:CPPIGetOwner(), self, const, ...);
+	local const = bConsole and EXPR_CONSOLE or EXPR_CHAT
+	EXPR_LIB.SendToPlayer(self:CPPIGetOwner(), self, const, ...)
 end
 
 --[[
@@ -89,19 +89,19 @@ local function SortPorts( PortA, PortB )
 end
 
 function ENT:TriggerInput(name, value, noTrig)
-	local context = self.context;
+	local context = self.context
 
-	if (context) then
-		local port = self.wire_inport_tbl[name];
-		local wireport = self.Inputs[name];
+	if context then
+		local port = self.wire_inport_tbl[name]
+		local wireport = self.Inputs[name]
 
-		if (port and wireport) then
-			if (port.wire == wireport.Type) then
-				local v = port.func and port.func(value) or value;
+		if port and wireport then
+			if port.wire == wireport.Type then
+				local v = port.func and port.func(value) or value
 
-				if (v ~= self.context.wire_in[name]) then
-					context.wire_in[name] = v;
-					self:CallEvent("", 0, "Trigger", {"s", name}, {port.class, v});
+				if v ~= self.context.wire_in[name] then
+					context.wire_in[name] = v
+					self:CallEvent("", 0, "Trigger", {"s", name}, {port.class, v})
 				end
 			end
 		end
@@ -109,18 +109,18 @@ function ENT:TriggerInput(name, value, noTrig)
 end
 
 function ENT:TriggerOutputs()
-	local context = self.context;
+	local context = self.context
 
-	if (context) then
+	if context then
 		for name, wireport in pairs(self.OutPorts) do
-			local port = self.wire_outport_tbl[name];
+			local port = self.wire_outport_tbl[name]
 
-			if (port and port.wire == wireport.Type) then
-				local value = context.wire_out[name];
-				local v = port.func and port.func(value) or value;
+			if port and port.wire == wireport.Type then
+				local value = context.wire_out[name]
+				local v = port.func and port.func(value) or value
 
-				if (v ~= wireport.Value) then
-					WireLib.TriggerOutput(self, name, v);
+				if v ~= wireport.Value then
+					WireLib.TriggerOutput(self, name, v)
 				end
 			end
 		end
@@ -128,46 +128,46 @@ function ENT:TriggerOutputs()
 end
 
 function ENT:BuildWiredPorts(sort_in, sort_out)
-	local names_in = {};
-	local types_in = {};
+	local names_in = {}
+	local types_in = {}
 
-	local context = self.context;
+	local context = self.context
 
-	table.sort(sort_in, SortPorts);
+	table.sort(sort_in, SortPorts)
 
 	for var, port in pairs(sort_in) do
-		names_in[#names_in + 1] = var;
-		types_in[#types_in + 1] = port.wire;
+		names_in[#names_in + 1] = var
+		types_in[#types_in + 1] = port.wire
 	end
 	
-	self.wire_inport_tbl = sort_in;
-	self.Inputs = WireLib.AdjustSpecialInputs(self, names_in, types_in);
+	self.wire_inport_tbl = sort_in
+	self.Inputs = WireLib.AdjustSpecialInputs(self, names_in, types_in)
 
 	for name, wireport in pairs(self.Inputs) do
-		self:TriggerInput(name, wireport.Value);
+		self:TriggerInput(name, wireport.Value)
 	end
 
 	------------------------------------------------------------------------------
 
-	local names_out = {};
-	local types_out = {};
+	local names_out = {}
+	local types_out = {}
 	
-	table.sort(sort_out, SortPorts);
+	table.sort(sort_out, SortPorts)
 
 	for var, port in pairs(sort_out) do
-		names_out[#names_out + 1] = var;
-		types_out[#types_out + 1] = port.wire;
+		names_out[#names_out + 1] = var
+		types_out[#types_out + 1] = port.wire
 	end
 
-	self.wire_outport_tbl = sort_out;
+	self.wire_outport_tbl = sort_out
 	self.OutPorts = WireLib.AdjustSpecialOutputs( self, names_out, types_out )
 
 	for name, wireport in pairs(self.OutPorts) do
-		local port = self.wire_outport_tbl[name];
+		local port = self.wire_outport_tbl[name]
 
-		if (port and port.wire == wireport.Type) then
-			local value = wireport.Value;
-			context.wire_out[name] = port.func_in and port.func_in(value) or value;
+		if port and port.wire == wireport.Type then
+			local value = wireport.Value
+			context.wire_out[name] = port.func_in and port.func_in(value) or value
 		end
 	end
 
@@ -183,7 +183,7 @@ end
 ]]
 
 function ENT:Initialize()
-	self.BaseClass.Initialize(self);
+	self.BaseClass.Initialize(self)
 	self.Inputs = WireLib.CreateInputs( self, { } )
 	self.Outputs = WireLib.CreateOutputs( self, { } )
 end
@@ -199,9 +199,9 @@ function ENT:BuildDupeInfo()
 end
 
 function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
-	ent.player = ply;
-	self:SetPlayer(ply);
-	self:SetCode(info.script);
-	self.BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID);
+	ent.player = ply
+	self:SetPlayer(ply)
+	self:SetCode(info.script)
+	self.BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID)
 end
 

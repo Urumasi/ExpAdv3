@@ -12,53 +12,53 @@
 
 local COLORS = {}
 
-COLORS.Generic = Color(200, 200, 200);
-COLORS.Removed = Color(255, 0, 0);
-COLORS.Replaced = Color(150, 150, 0);
-COLORS.Before = Color(0, 150, 100);
-COLORS.After = Color(0, 100, 150);
+COLORS.Generic = Color(200, 200, 200)
+COLORS.Removed = Color(255, 0, 0)
+COLORS.Replaced = Color(150, 150, 0)
+COLORS.Before = Color(0, 150, 100)
+COLORS.After = Color(0, 100, 150)
 
 local function ProcessLines(tokens, alltasks)
-	local off = "";
-	local row = {};
-	local rows = {};
+	local off = ""
+	local row = {}
+	local rows = {}
 
 	for k = 1, #tokens do
-		local token = tokens[k];
-		local data = token.data;
+		local token = tokens[k]
+		local data = token.data
 
-		if (token.orig) then
-			data = token.orig;
+		if token.orig then
+			data = token.orig
 		end
 
-		if (token.newLine) then
-			rows[#rows + 1] = row;
-			row = {{off, COLORS.Generic}};
+		if token.newLine then
+			rows[#rows + 1] = row
+			row = {{off, COLORS.Generic}}
 		end
 
-		if (token.depth and token.depth > 0) then
+		if token.depth and token.depth > 0 then
 			-- off = string.rep("    ", token.depth)
 			-- row[#row + 1] = {off, COLORS.Generic}
 		end
 
-		local tasks = alltasks[token.pos];
+		local tasks = alltasks[token.pos]
 
-		if (not tasks) then
-			row[#row + 1] = {data .. " ", COLORS.Generic};
+		if not tasks then
+			row[#row + 1] = {data .. " ", COLORS.Generic}
 		else
-			if (tasks.prefix) then
+			if tasks.prefix then
 				for _, task in pairs(tasks.prefix) do
-					if (task.newLine) then
-						rows[#rows + 1] = row;
-						row = {{off, COLORS.Generic}};
+					if task.newLine then
+						rows[#rows + 1] = row
+						row = {{off, COLORS.Generic}}
 					end
 
 					row[#row + 1] = {task.str .. " ", COLORS.Before}
 				end
 			end
 
-			if (not tasks.remove) then
-				if (tasks.replace) then
+			if not tasks.remove then
+				if tasks.replace then
 					row[#row + 1] = {tasks.replace.str .. " ", COLORS.Replaced}
 				else
 					row[#row + 1] = {data .. " ", COLORS.Generic}
@@ -67,11 +67,11 @@ local function ProcessLines(tokens, alltasks)
 				row[#row + 1] = {data .. " ", COLORS.Removed}
 			end
 
-			if (tasks.postfix) then
+			if tasks.postfix then
 				for _, task in pairs(tasks.postfix) do
-					if (task.newLine) then
-						rows[#rows + 1] = row;
-						row = {{off, COLORS.Generic}};
+					if task.newLine then
+						rows[#rows + 1] = row
+						row = {{off, COLORS.Generic}}
 					end
 
 					row[#row + 1] = {task.str .. " ", COLORS.After}
@@ -80,40 +80,40 @@ local function ProcessLines(tokens, alltasks)
 		end
 	end
 
-	rows[#rows + 1] = row;
+	rows[#rows + 1] = row
 
 
-	local allTokens = {};
+	local allTokens = {}
 
 	for k, row in pairs(rows) do
 		for j, token in pairs(row) do
-			allTokens[#allTokens + 1] = token[1];
+			allTokens[#allTokens + 1] = token[1]
 		end
 
-		allTokens[#allTokens + 1] = "\n";
+		allTokens[#allTokens + 1] = "\n"
 	end
 
-	return rows, table.concat(allTokens, "");
+	return rows, table.concat(allTokens, "")
 end
 
 EXPR_LIB.ShowDebug = function(tokens, tasks)
-	if (Golem) then
-		local inst = Golem:GetInstance();
+	if Golem then
+		local inst = Golem:GetInstance()
 		
-		local rows, text = ProcessLines(tokens, tasks);
+		local rows, text = ProcessLines(tokens, tasks)
 		
-		local sheet = inst:NewTab("editor", text, nil, "Debug");
+		local sheet = inst:NewTab("editor", text, nil, "Debug")
 		
-		sheet.Panel._OnKeyCodeTyped = function() end;
-		sheet.Panel._OnTextChanged = function() end;
+		sheet.Panel._OnKeyCodeTyped = function() end
+		sheet.Panel._OnTextChanged = function() end
 		
 		sheet.Panel.SyntaxColorLine = function(self, row)
 			
 			if rows[row] then 
-				return rows[row];
+				return rows[row]
 			end 
 
 			return {{self.Rows[row], Color(255,255,255)}}
-		end;
+		end
 	end
 end
