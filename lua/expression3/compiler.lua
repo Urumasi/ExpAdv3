@@ -2362,7 +2362,6 @@ function COMPILER:Compile_FUNC(inst, token, expressions)
 		error("Attempt to inject " .. signature .. " but operator was incorrect " .. type(op.operator) .. ".")
 	end
 
-
 	if vargs then
 		if #expressions >= 1 then
 			for i = vargs, #expressions do

@@ -93,6 +93,8 @@ function PARSER:Initalize(instance)
 	self.__pos = 0
 	self.__depth = 0
 	self.__scope = 0
+	self.__scopes = {[0] = {classes = {}}}
+
 	self.__instructions = {}
 
 	self.__token = instance.tokens[0]
@@ -174,7 +176,7 @@ function PARSER:HasTokens()
 	return self.__next ~= nil
 end
 
-function PARSER:CheckToken(tknType, ...)
+--[[function PARSER:CheckToken(tknType, ...)
 	if self.__pos < self.__total then
 		local tkn = self.__next
 
@@ -195,7 +197,7 @@ function PARSER:Accept(tknType, ...)
 	end
 
 	return false
-end
+end]]
 
 function PARSER:AcceptWithData(tknType, data)
 	if self:CheckToken(tknType) and self.__next.data == data then
@@ -488,11 +490,11 @@ function PARSER:Block_1(_end, lcb)
 		local stmts = {}
 
 		if not self:CheckToken("rcb") then
-			self.__scope = self.__scope + 1
+			self:PushScope()
 
 			stmts = self:Statments(true)
 
-			self.__scope = self.__scope - 1
+			self:PopScope()
 		end
 
 		if not self:Accept("rcb") then
@@ -511,11 +513,11 @@ function PARSER:Block_1(_end, lcb)
 			self:QueueInjectionAfter(seq, self.__token, lcb)
 		end
 
-		self.__scope = self.__scope + 1
+		self:PushScope()
 
 		local stmt = self:Statment_1()
 
-		self.__scope = self.__scope - 1
+		self:PopScope()
 
 		if _end then
 			self:QueueInjectionAfter(seq, stmt.final, "end")
@@ -527,6 +529,25 @@ end
 
 --[[
 
+]]
+
+function PARSER:PushScope(self)
+	local s = {classes = {}}
+	local i = self.__scope + 1
+
+	self.__scope = i
+	self.__scopes[i] = s
+
+	return s
+end
+
+function PARSER:PopScope(self)
+	local i = self.__scope - 1
+	self.__scope = i
+	self.__scopes[i] = nil
+end
+
+--[[
 ]]
 
 function PARSER:Directive_NAME(token, directive)
@@ -2085,24 +2106,44 @@ end
 --[[
 ]]
 
+function PARSER:IsUserClass(name)
+	for i = self.__scope, 0, -1 do
+		local scope = self.__scopes[i]
+
+		if scope and scope.classes[name] then
+			if accept then self:Next() end
+			return true
+		end
+	end
+
+	return false
+end
+
 function PARSER:ClassStatment_0()
 	if self:Accept("cls") then
 		local inst = self:StartInstruction("class", self.__token)
 
-		self:Require("var", "Class anme expected after class")
+		self:Require("var", "Class name expected after class")
 		inst.__classname = self.__token
-	
+		
+		local scopeID = self.__scope;
+		local scopeData = self.__scopes[scopeID];
+		scopeData.classes[self.__token.data] = true;
+
+		print("NAME:", self.__token.data)
+		PrintTable(scopeData.classes);
+
 		self:Require("lcb", "Left curly bracket (}) expected, to open class")
 		inst.__lcb = self.__token
 		
 		local stmts = {}
 
 		if not self:CheckToken("rcb") then
-			self.__scope = self.__scope + 1
+			self:PushScope()
 
 			stmts = self:Statments(true, self.ClassStatment_1)
 
-			self.__scope = self.__scope - 1
+			self:PopScope()
 		end
 
 		self:Require("rcb", "Right curly bracket (}) missing, to close class")
