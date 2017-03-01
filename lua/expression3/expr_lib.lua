@@ -385,7 +385,7 @@ end
 local methods
 local loadMethods = false
 
-function EXPR_LIB.RegisterMethod(class, name, parameter, type, count, method, excludeContext)
+function EXPR_LIB.RegisterMethod(class, name, parameter, retType, count, method, excludeContext)
 	-- if method is nil lua, compiler will use native Object:(...)
 
 	if not loadMethods then
@@ -404,10 +404,10 @@ function EXPR_LIB.RegisterMethod(class, name, parameter, type, count, method, ex
 		EXPR_LIB.ThrowInternal(0, "%s for method %s.%s(%s)", signature, class, name, parameter)
 	end
 
-	local res = EXPR_LIB.GetClass(type)
+	local res = EXPR_LIB.GetClass(retType)
 
 	if not res then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register method %s.%s(%s) with none existing return class %s", class, name, parameter, type)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register method %s.%s(%s) with none existing return class %s", class, name, parameter, retType)
 	end
 
 	local meth = {}
@@ -430,7 +430,7 @@ end
 local operators
 local loadOperators = false
 
-function EXPR_LIB.RegisterOperator(operation, parameter, type, count, operator, excludeContext)
+function EXPR_LIB.RegisterOperator(operation, parameter, retType, count, operator, excludeContext)
 	-- if operator is nil lua, compiler will use native if possible (+, -, /, *, ^, etc)
 
 	if not loadOperators then
@@ -443,10 +443,10 @@ function EXPR_LIB.RegisterOperator(operation, parameter, type, count, operator, 
 		EXPR_LIB.ThrowInternal(0, "%s for operator %s(%s)", signature, operation, parameter)
 	end
 
-	local res = EXPR_LIB.GetClass(type)
+	local res = EXPR_LIB.GetClass(retType)
 
 	if not res then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register operator %s(%s) with none existing return class %s", operation, parameter, type)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register operator %s(%s) with none existing return class %s", operation, parameter, retType)
 	end
 
 	local op = {}
@@ -466,31 +466,31 @@ end
 
 local castOperators
 
-function EXPR_LIB.RegisterCastingOperator(type, parameter, operator, excludeContext)
+function EXPR_LIB.RegisterCastingOperator(castType, parameter, operator, excludeContext)
 	if not loadOperators then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register casting operator [(%s) %s] outside of Hook::Expression3.LoadOperators", type, parameter)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register casting operator [(%s) %s] outside of Hook::Expression3.LoadOperators", castType, parameter)
 	end
 
 	if not operator then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register native casting operator [(%s) %s] an operation function is required.", type, parameter)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register native casting operator [(%s) %s] an operation function is required.", castType, parameter)
 	end
 
 	local state, signature = EXPR_LIB.SortArgs(parameter)
 
 	if not state then
-		EXPR_LIB.ThrowInternal(0, "%s for casting operator [(%s) %s]", signature, type, parameter)
+		EXPR_LIB.ThrowInternal(0, "%s for casting operator [(%s) %s]", signature, castType, parameter)
 	end
 
-	local res = EXPR_LIB.GetClass(type)
+	local res = EXPR_LIB.GetClass(castType)
 
 	if not res then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register casting operator [(%s) %s] for none existing class %s", type, parameter, type)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register casting operator [(%s) %s] for none existing class %s", castType, parameter, castType)
 	end
 
 	local op = {}
 	op.parameter = signature
 	op.state = STATE
-	op.signature = string.format("(%s)%s", type, signature)
+	op.signature = string.format("(%s)%s", castType, signature)
 	op.result = res.id
 	op.rCount = 1
 	op.operator = operator
@@ -522,7 +522,7 @@ end
 local functions
 local loadFunctions = false
 
-function EXPR_LIB.RegisterFunction(library, name, parameter, type, count, _function, excludeContext)
+function EXPR_LIB.RegisterFunction(library, name, parameter, retType, count, _function, excludeContext)
 	if not loadFunctions then
 		EXPR_LIB.ThrowInternal(0, "Attempt to register function %s.%s(%s) outside of Hook::Expression3.LoadFunctions", library, name, parameter)
 	end
@@ -539,10 +539,10 @@ function EXPR_LIB.RegisterFunction(library, name, parameter, type, count, _funct
 		EXPR_LIB.ThrowInternal(0, "%s for function %s.%s(%s)", signature, library, name, parameter)
 	end
 
-	local res = EXPR_LIB.GetClass(type)
+	local res = EXPR_LIB.GetClass(retType)
 
 	if not res then
-		EXPR_LIB.ThrowInternal(0, "Attempt to register function %s.%s(%s) with none existing return class %s", library, name, parameter, type)
+		EXPR_LIB.ThrowInternal(0, "Attempt to register function %s.%s(%s) with none existing return class %s", library, name, parameter, retType)
 	end
 
 	local op = {}
@@ -660,15 +660,15 @@ function EXPR_LIB.GetExtensionMetatable()
 	return Extension
 end
 
-function Extension.SetServerState(this)
+function Extension:SetServerState()
 	self.state = EXPR_SERVER
 end
 
-function Extension.SetSharedState(this)
+function Extension:SetSharedState()
 	self.state = EXPR_SHARED
 end
 
-function Extension.SetClientState(this)
+function Extension:SetClientState()
 	self.state = EXPR_CLIENT
 end
 
@@ -703,18 +703,18 @@ function Extension:RegisterConstructor(class, parameter, constructor, excludeCon
 	self.constructors[#self.constructors + 1] = entry
 end
 
-function Extension:RegisterMethod(class, name, parameter, type, count, method, excludeContext)
-	local entry = {class, name, parameter, type, count, method, excludeContext, self.state}
+function Extension:RegisterMethod(class, name, parameter, retType, count, method, excludeContext)
+	local entry = {class, name, parameter, retType, count, method, excludeContext, self.state}
 	self.methods[#self.methods + 1] = entry
 end
 
-function Extension:RegisterOperator(operation, parameter, type, count, operator, excludeContext)
-	local entry = {operation, parameter, type, count, operator, excludeContext, self.state}
+function Extension:RegisterOperator(operation, parameter, retType, count, operator, excludeContext)
+	local entry = {operation, parameter, retType, count, operator, excludeContext, self.state}
 	self.operators[#self.operators + 1] = entry
 end
 
-function Extension:RegisterCastingOperator(type, parameter, operator, excludeContext)
-	local entry = {type, parameter, operator, excludeContext, self.state}
+function Extension:RegisterCastingOperator(castType, parameter, operator, excludeContext)
+	local entry = {castType, parameter, operator, excludeContext, self.state}
 	self.castOperators[#self.castOperators + 1] = entry
 end
 
@@ -723,8 +723,8 @@ function Extension:RegisterLibrary(name)
 	self.libraries[#self.libraries + 1] = entry
 end
 
-function Extension:RegisterFunction(library, name, parameter, type, count, _function, excludeContext)
-	local entry = {library, name, parameter, type, count, _function, excludeContext, self.state}
+function Extension:RegisterFunction(library, name, parameter, retType, count, _function, excludeContext)
+	local entry = {library, name, parameter, retType, count, _function, excludeContext, self.state}
 	self.functions[#self.functions + 1] = entry
 end
 
@@ -743,7 +743,7 @@ end
 
 local enabledExtentions = {}
 
-function Extension.EnableExtension(this)
+function Extension:EnableExtension()
 	self.enabled = true
 
 	local classes = {}
@@ -903,8 +903,8 @@ function extendClass(class, base)
 	MsgN("Extended Class: ", c.name, " from ", b.name)
 end
 
-function EXPR_LIB.ToString(context, type, value)
-	local op = EXPR_CAST_OPERATORS["(s)" .. type]
+function EXPR_LIB.ToString(context, castType, value)
+	local op = EXPR_CAST_OPERATORS["(s)" .. castType]
 
 	if not op or not op.operator then
 		return tostring(value)

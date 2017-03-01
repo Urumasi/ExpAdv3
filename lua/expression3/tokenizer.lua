@@ -136,7 +136,7 @@ function TOKENIZER:Initalize(lang, script)
 	end
 end
 
-function TOKENIZER.Run(this)
+function TOKENIZER:Run()
 	--TODO: PcallX for stack traces on internal errors?
 	local status, result = pcall(self._Run, this)
 
@@ -155,7 +155,7 @@ function TOKENIZER.Run(this)
 	return false, err
 end
 
-function TOKENIZER._Run(this)
+function TOKENIZER:_Run()
 	while self.__char ~= nil do
 		self:Loop()
 	end
@@ -185,20 +185,20 @@ end
 --[[
 ]]
 
-function TOKENIZER.NextChar(this)
+function TOKENIZER:NextChar()
 	self.__dataEnd = self.__dataEnd + 1
 	self.__data = self.__data .. self.__char
 	self:SkipChar()
 end
 
-function TOKENIZER.PrevChar(this)
+function TOKENIZER:PrevChar()
 	self.__dataEnd = self.__dataEnd - 2
 	self.__pos = self.__pos - 2
 	self.__data = string.sub(self.__data, 0, #self.__data - 2)
 	self:SkipChar()
 end
 
-function TOKENIZER.SkipChar(this)
+function TOKENIZER:SkipChar()
 	if self.__lengh < self.__pos then
 		self.__char = nil
 	elseif self.__char == "\n" then
@@ -208,7 +208,7 @@ function TOKENIZER.SkipChar(this)
 	end
 end
 
-function TOKENIZER.PushLine(this)
+function TOKENIZER:PushLine()
 	self.__readLine = self.__readLine + 1
 	self.__readChar = 1
 
@@ -216,14 +216,14 @@ function TOKENIZER.PushLine(this)
 	self.__char = string.sub(self.__script, self.__pos, self.__pos)
 end
 
-function TOKENIZER.PushChar(this)
+function TOKENIZER:PushChar()
 	self.__readChar = self.__readChar + 1
 
 	self.__pos = self.__pos + 1
 	self.__char = string.sub(self.__script, self.__pos, self.__pos)
 end
 
-function TOKENIZER.Clear(this)
+function TOKENIZER:Clear()
 	self.__data = ""
 	self.__match = ""
 	self.__dataStart = self.__pos
@@ -330,7 +330,7 @@ end
 --[[
 ]]
 
-function TOKENIZER.SkipSpaces(this)
+function TOKENIZER:SkipSpaces()
 	self:NextPattern("^[%s\n]*")
 
 	local r = self.__match
@@ -340,7 +340,7 @@ function TOKENIZER.SkipSpaces(this)
 	return r
 end
 
-function TOKENIZER.SkipComments(this)
+function TOKENIZER:SkipComments()
 	if self:NextPattern("^/%*.-%*/") or self:NextPattern("^//.-\n") then
 		self.__data = ""
 		self.__skip = true
@@ -363,7 +363,7 @@ end
 --[[
 ]]
 
-function TOKENIZER.Loop(this)
+function TOKENIZER:Loop()
 	if self.__char == nil then
 		return false
 	end

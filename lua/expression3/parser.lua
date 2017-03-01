@@ -109,7 +109,7 @@ function PARSER:Initalize(instance)
 
 end
 
-function PARSER.Run(this)
+function PARSER:Run()
 	--TODO: PcallX for stack traces on internal errors?
 	local status, result = pcall(self._Run, this)
 
@@ -128,7 +128,7 @@ function PARSER.Run(this)
 	return false, err
 end
 
-function PARSER._Run(this)
+function PARSER:_Run()
 	local result = {}
 	result.instruction = self:Root()
 	result.script = self.__script
@@ -157,7 +157,7 @@ end
 --[[
 ]]
 
-function PARSER.Next(this)
+function PARSER:Next()
 	self.__pos = self.__pos + 1
 	
 	self.__token = self.__tokens[self.__pos]
@@ -170,15 +170,15 @@ function PARSER.Next(this)
 	return true
 end
 
-function PARSER.HasTokens(this)
+function PARSER:HasTokens()
 	return self.__next ~= nil
 end
 
-function PARSER:CheckToken(type, ...)
+function PARSER:CheckToken(tknType, ...)
 	if self.__pos < self.__total then
 		local tkn = self.__next
 
-		for _, t in pairs({type, ...}) do
+		for _, t in pairs({tknType, ...}) do
 			if t == tkn.type then
 				return true
 			end
@@ -188,8 +188,8 @@ function PARSER:CheckToken(type, ...)
 	return false
 end
 
-function PARSER:Accept(type, ...)
-	if self:CheckToken(type, ...) then
+function PARSER:Accept(tknType, ...)
+	if self:CheckToken(tknType, ...) then
 		self:Next()
 		return true
 	end
@@ -197,8 +197,8 @@ function PARSER:Accept(type, ...)
 	return false
 end
 
-function PARSER:AcceptWithData(type, data)
-	if self:CheckToken(type) and self.__next.data == data then
+function PARSER:AcceptWithData(tknType, data)
+	if self:CheckToken(tknType) and self.__next.data == data then
 		self:Next()
 		return true
 	end
@@ -206,7 +206,7 @@ function PARSER:AcceptWithData(type, data)
 	return false
 end
 
-function PARSER.GetTokenData(this)
+function PARSER:GetTokenData()
 	return self.__token.data
 end
 
@@ -240,7 +240,7 @@ function PARSER:StepBackward(steps)
 	self:Next()
 end
 
-function PARSER.GetFirstTokenOnLine(this)
+function PARSER:GetFirstTokenOnLine()
 	for i = self.__pos, 1, -1 do
 		local tkn = self.__tokens[i]
 
@@ -252,7 +252,7 @@ function PARSER.GetFirstTokenOnLine(this)
 	return self.__tokens[1]
 end
 
-function PARSER:StatmentContains(token, type)
+function PARSER:StatmentContains(token, tknType)
 	local i = self.__pos
 
 	while i < self.__total do
@@ -266,7 +266,7 @@ function PARSER:StatmentContains(token, type)
 			return
 		end
 
-		if tkn.type == type then
+		if tkn.type == tknType then
 			return tkn
 		end
 
@@ -274,7 +274,7 @@ function PARSER:StatmentContains(token, type)
 	end
 end
 
-function PARSER:LastInStatment(token, type)
+function PARSER:LastInStatment(token, tknType)
 	local last
 	local i = token.index
 
@@ -289,7 +289,7 @@ function PARSER:LastInStatment(token, type)
 			break
 		end
 
-		if tkn.type == type then
+		if tkn.type == tknType then
 			last = tkn
 		end
 
@@ -302,14 +302,14 @@ end
 --[[
 ]]
 
-function PARSER.Require( this, type, msg, ... )
-	if not self:Accept(type) then
+function PARSER:Require( tknType, msg, ... )
+	if not self:Accept(tknType) then
 		self:Throw( self.__token, msg, ... )
 	end
 end
 
-function PARSER.Exclude( this, tpye, msg, ... )
-	if self:Accept(type) then
+function PARSER:Exclude( tknType, msg, ... )
+	if self:Accept(tknType) then
 		self:Throw( self.__token, msg, ... )
 	end
 end
@@ -465,7 +465,7 @@ end
 --[[
 ]]
 
-function PARSER.Root(this)
+function PARSER:Root()
 	local seq = self:StartInstruction("seq", self.__tokens[1])
 
 	local stmts = self:Statments(false)
@@ -697,7 +697,7 @@ end
 --[[
 ]]
 
-function PARSER.Statment_0(this)
+function PARSER:Statment_0()
 	local dirLine
 
 	while self:Accept("dir") do
@@ -755,7 +755,7 @@ function PARSER.Statment_0(this)
 end
 
 --
-function PARSER.Statment_1(this)
+function PARSER:Statment_1()
 	if self:Accept("try") then
 		local inst = self:StartInstruction("try", self.__token)
 
@@ -785,7 +785,7 @@ function PARSER.Statment_1(this)
 	return self:Statment_2()
 end
 
-function PARSER.Statment_2(this)
+function PARSER:Statment_2()
 	if self:Accept("if") then
 		local inst = self:StartInstruction("if", self.__token)
 
@@ -803,7 +803,7 @@ function PARSER.Statment_2(this)
 	return self:Statment_5()
 end
 
-function PARSER.Statment_3(this)
+function PARSER:Statment_3()
 	if self:Accept("eif") then
 		local inst = self:StartInstruction("elseif", self.__token)
 
@@ -819,7 +819,7 @@ function PARSER.Statment_3(this)
 	return self:Statment_4()
 end
 
-function PARSER.Statment_4(this)
+function PARSER:Statment_4()
 	if self:Accept("els") then
 		local inst = self:StartInstruction("else", self.__token)
 
@@ -833,7 +833,7 @@ end
 ]]
 
 
-function PARSER.Statment_5(this)
+function PARSER:Statment_5()
 	if self:Accept("for") then
 		local inst = self:StartInstruction("for", self.__token)
 
@@ -887,7 +887,7 @@ function PARSER.Statment_5(this)
 	return self:Statment_6()
 end
 
-function PARSER.Statment_6(this)
+function PARSER:Statment_6()
 	if self:Accept("sv") then
 		local inst = self:StartInstruction("server", self.__token)
 
@@ -918,7 +918,7 @@ end
 --[[
 ]]
 
-function PARSER.Statment_7(this)
+function PARSER:Statment_7()
 	if self:Accept("glo") then
 		local inst = self:StartInstruction("global", self.__token)
 
@@ -1007,7 +1007,7 @@ function PARSER.Statment_7(this)
 	return self:Statment_8()
 end
 
-function PARSER.Statment_8(this)
+function PARSER:Statment_8()
 	if self:Accept("var") then
 		
 		if not self:CheckToken("com", "ass", "aadd", "asub", "adiv", "amul") then
@@ -1070,7 +1070,7 @@ function PARSER.Statment_8(this)
 	return self:Statment_9()
 end
 
-function PARSER.Statment_8(this)
+function PARSER:Statment_8()
 	if self:Accept("del") then
 		local inst = self:StartInstruction("delegate", self.__token)
 
@@ -1150,7 +1150,7 @@ function PARSER.Statment_8(this)
 	return self:Statment_10()
 end
 
-function PARSER.Statment_10(this)
+function PARSER:Statment_10()
 	if self:AcceptWithData("typ", "f") then
 
 		local inst = self:StartInstruction("funct", self.__token)
@@ -1185,7 +1185,7 @@ function PARSER.Statment_10(this)
 	return self:Statment_11()
 end
 
-function PARSER.Statment_11(this)
+function PARSER:Statment_11()
 	if self:Accept("ret") then
 		local expressions = {}
 		local inst = self:StartInstruction("return", self.__token)
@@ -1255,7 +1255,7 @@ end
 --[[
 ]]
 
-function PARSER.Expression_1(this)
+function PARSER:Expression_1()
 	local expr = self:Expression_2()
 
 	while self:Accept("qsm") do
@@ -1277,7 +1277,7 @@ function PARSER.Expression_1(this)
 	return self:Expression_Trailing(expr)
 end
 
-function PARSER.Expression_2(this)
+function PARSER:Expression_2()
 	local expr = self:Expression_3()
 
 	while self:Accept("or") do
@@ -1293,7 +1293,7 @@ function PARSER.Expression_2(this)
 	return expr
 end
 
-function PARSER.Expression_3(this)
+function PARSER:Expression_3()
 	local expr = self:Expression_4()
 
 	while self:Accept("and") do
@@ -1309,7 +1309,7 @@ function PARSER.Expression_3(this)
 	return expr
 end
 
-function PARSER.Expression_4(this)
+function PARSER:Expression_4()
 	local expr = self:Expression_5()
 
 	while self:Accept("bxor") do
@@ -1325,7 +1325,7 @@ function PARSER.Expression_4(this)
 	return expr
 end
 
-function PARSER.Expression_5(this)
+function PARSER:Expression_5()
 	local expr = self:Expression_6()
 
 	while self:Accept("bor") do
@@ -1341,7 +1341,7 @@ function PARSER.Expression_5(this)
 	return expr
 end
 
-function PARSER.Expression_6(this)
+function PARSER:Expression_6()
 	local expr = self:Expression_7()
 
 	while self:Accept("band") do
@@ -1357,7 +1357,7 @@ function PARSER.Expression_6(this)
 	return expr
 end
 
-function PARSER.Expression_7(this)
+function PARSER:Expression_7()
 	local expr = self:Expression_8()
 
 	while self:CheckToken("eq", "neq") do
@@ -1427,7 +1427,7 @@ function PARSER.Expression_7(this)
 	return expr
 end
 
-function PARSER.Expression_8(this)
+function PARSER:Expression_8()
 	local expr = self:Expression_9()
 
 	while self:CheckToken("lth", "leq", "gth", "geq") do
@@ -1469,7 +1469,7 @@ function PARSER.Expression_8(this)
 	return expr
 end
 
-function PARSER.Expression_9(this)
+function PARSER:Expression_9()
 	local expr = self:Expression_10()
 
 	while self:Accept("bshl") do
@@ -1485,7 +1485,7 @@ function PARSER.Expression_9(this)
 	return expr
 end
 
-function PARSER.Expression_10(this)
+function PARSER:Expression_10()
 	local expr = self:Expression_11()
 
 	while self:Accept("bshr") do
@@ -1501,7 +1501,7 @@ function PARSER.Expression_10(this)
 	return expr
 end
 
-function PARSER.Expression_11(this)
+function PARSER:Expression_11()
 	local expr = self:Expression_12()
 
 	while self:Accept("add") do
@@ -1517,7 +1517,7 @@ function PARSER.Expression_11(this)
 	return expr
 end
 
-function PARSER.Expression_12(this)
+function PARSER:Expression_12()
 	local expr = self:Expression_13()
 
 	while self:Accept("sub") do
@@ -1533,7 +1533,7 @@ function PARSER.Expression_12(this)
 	return expr
 end
 
-function PARSER.Expression_13(this)
+function PARSER:Expression_13()
 	local expr = self:Expression_14()
 
 	while self:Accept("div") do
@@ -1549,7 +1549,7 @@ function PARSER.Expression_13(this)
 	return expr
 end
 
-function PARSER.Expression_14(this)
+function PARSER:Expression_14()
 
 	local expr = self:Expression_15()
 
@@ -1566,7 +1566,7 @@ function PARSER.Expression_14(this)
 	return expr
 end
 
-function PARSER.Expression_15(this)
+function PARSER:Expression_15()
 	local expr = self:Expression_16()
 
 	while self:Accept("exp") do
@@ -1582,7 +1582,7 @@ function PARSER.Expression_15(this)
 	return expr
 end
 
-function PARSER.Expression_16(this)
+function PARSER:Expression_16()
 	local expr = self:Expression_17()
 
 	while self:Accept("mod") do
@@ -1598,7 +1598,7 @@ function PARSER.Expression_16(this)
 	return expr
 end
 
-function PARSER.Expression_17(this)
+function PARSER:Expression_17()
 	if self:Accept("add") then
 		local tkn = self.__token
 
@@ -1614,7 +1614,7 @@ function PARSER.Expression_17(this)
 	return self:Expression_18()
 end
 
-function PARSER.Expression_18(this)
+function PARSER:Expression_18()
 	if self:Accept("neg") then
 		local inst = self:StartInstruction("neg", expr.token)
 
@@ -1630,7 +1630,7 @@ function PARSER.Expression_18(this)
 	return self:Expression_19()
 end
 
-function PARSER.Expression_19(this)
+function PARSER:Expression_19()
 	if self:Accept("neg") then
 		local inst = self:StartInstruction("not", expr.token)
 
@@ -1646,7 +1646,7 @@ function PARSER.Expression_19(this)
 	return self:Expression_20()
 end
 
-function PARSER.Expression_20(this)
+function PARSER:Expression_20()
 	if self:Accept("len") then
 		local inst = self:StartInstruction("len", expr.token)
 
@@ -1662,7 +1662,7 @@ function PARSER.Expression_20(this)
 	return self:Expression_21()
 end
 
-function PARSER.Expression_21(this)
+function PARSER:Expression_21()
 	if self:Accept("cst") then
 		local inst = self:StartInstruction("cast", expr.token)
 		
@@ -1678,7 +1678,7 @@ function PARSER.Expression_21(this)
 	return self:Expression_22()
 end
 
-function PARSER.Expression_22(this)
+function PARSER:Expression_22()
 	if self:Accept("lpa") then
 		local expr = self:Expression_1()
 
@@ -1690,7 +1690,7 @@ function PARSER.Expression_22(this)
 	return self:Expression_23()
 end
 
-function PARSER.Expression_23(this)
+function PARSER:Expression_23()
 	if self:CheckToken("var") then
 		local token = self.__token
 		local library = self.__next.data
@@ -1742,7 +1742,7 @@ function PARSER.Expression_23(this)
 	return self:Expression_24()
 end
 
-function PARSER.Expression_24(this)
+function PARSER:Expression_24()
 	if self:Accept("var") then
 		local inst = self:StartInstruction("var", self.__token)
 
@@ -1756,7 +1756,7 @@ function PARSER.Expression_24(this)
 	return self:Expression_25()
 end
 
-function PARSER.Expression_25(this)
+function PARSER:Expression_25()
 
 	if self:Accept("new") then
 		local inst = self:StartInstruction("new", self.__token)
@@ -1794,7 +1794,7 @@ function PARSER.Expression_25(this)
 	return self:Expression_26()
 end
 
-function PARSER.Expression_26(this)
+function PARSER:Expression_26()
 	if self:AcceptWithData("typ", "f") then
 		local inst = self:StartInstruction("lambda", self.__token)
 
@@ -1861,7 +1861,7 @@ function PARSER:InputPeramaters(inst)
 	return perams, table.concat(signature, ",")
 end
 
-function PARSER.Expression_27(this)
+function PARSER:Expression_27()
 	expr = self:Expression_28()
 
 	if expr then
@@ -1871,7 +1871,7 @@ function PARSER.Expression_27(this)
 	self:ExpressionErr()
 end
 
-function PARSER.Expression_28(this)
+function PARSER:Expression_28()
 	if self:Accept("tre", "fls") then
 		local inst = self:StartInstruction("bool", self.__token)
 		inst.value = self.__token.data
@@ -2023,7 +2023,7 @@ function PARSER:Expression_Trailing(expr)
 	return expr
 end
 
-function PARSER.GetCondition(this)
+function PARSER:GetCondition()
 	self:Require("lpa", "Left parenthesis ( () required, to open condition.")
 	
 	local inst = self:StartInstruction("cond", self.__token)
@@ -2035,7 +2035,7 @@ function PARSER.GetCondition(this)
 	return self:EndInstruction(inst, {expr})
 end
 
-function PARSER.ExpressionErr(this)
+function PARSER:ExpressionErr()
 	if not self.__token then
 		self:Throw(self.__tokens[#self.__tokens], "Further input required at end of code, incomplete expression")
 	end
@@ -2085,7 +2085,7 @@ end
 --[[
 ]]
 
-function PARSER.ClassStatment_0(this)
+function PARSER:ClassStatment_0()
 	if self:Accept("cls") then
 		local inst = self:StartInstruction("class", self.__token)
 
@@ -2112,7 +2112,7 @@ function PARSER.ClassStatment_0(this)
 	end
 end
 
-function PARSER.ClassStatment_1(this)
+function PARSER:ClassStatment_1()
 	if self:Accept("typ") then
 		local inst = self:StartInstruction("def_feild", self.__token)
 		

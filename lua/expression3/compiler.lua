@@ -504,11 +504,11 @@ end
 --[[
 ]]
 
-function COMPILER:QueueInstruction(inst, inst, token, inst, type) -- What the hell are these arguments
+function COMPILER:QueueInstruction(inst, inst, token, inst, instType) -- What the hell are these arguments
 	local op = {}
 	op.token = token
 	op.inst = inst
-	op.type = type
+	op.type = instType
 
 	local tasks = self.__tasks[token.pos]
 
@@ -1925,9 +1925,9 @@ function COMPILER:Expression_IS(expr)
 	return false, expr
 end
 
-function COMPILER:CastExpression(type, expr)
+function COMPILER:CastExpression(exprType, expr)
 
-	local signature = string.format("(%s)%s", name(type), name(expr.result))
+	local signature = string.format("(%s)%s", name(exprType), name(expr.result))
 	
 	local op = EXPR_CAST_OPERATORS[signature]
 

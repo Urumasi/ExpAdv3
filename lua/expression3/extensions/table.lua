@@ -15,8 +15,8 @@
 local eTable = {}
 local throwif = EXPR_LIB.ThrowIF
 
-function eTable.get(ctx, tbl, key, type)
-	type = type or "_vr"
+function eTable.get(ctx, tbl, key, valType)
+	valType = valType or "_vr"
 
 	if(not tbl or not tbl.tbl) then
 		ctx:Throw("Attempted to index a nil value.")
@@ -28,19 +28,19 @@ function eTable.get(ctx, tbl, key, type)
 		ctx:Throw("Attempted to index field %s a nil value.", tostring(key))
 	end
 
-	if type == "_vr" then
+	if valType == "_vr" then
 		return vr
 	end
 
-	if( vr[1] ~= type ) then
-		ctx:Throw( "Attempted to index field %s, %s expected got %s.", tostring(key), type, vr[1])
+	if( vr[1] ~= valType ) then
+		ctx:Throw( "Attempted to index field %s, %s expected got %s.", tostring(key), valType, vr[1])
 	end
 
 	return vr[2]
 end
 
-function eTable.set(ctx, tbl, key, type, value)
-	type = type or "_vr"
+function eTable.set(ctx, tbl, key, valType, value)
+	valType = valType or "_vr"
 
 	if(not tbl or not tbl.tbl) then
 		ctx:Throw("Attempted to index a nil value.")
@@ -58,12 +58,12 @@ function eTable.set(ctx, tbl, key, type, value)
 	neweight = neweight + (value == nil and 0 or 1)
 
 	if value ~= nil then
-		if type == "_vr" then
-			type = value[1]
+		if valType == "_vr" then
+			valType = value[1]
 			value = value[2]
 		end
 
-		if type == "t" then
+		if valType == "t" then
 			neweight = neweight + value.size
 			tbl.children[value] = value
 
@@ -77,7 +77,7 @@ function eTable.set(ctx, tbl, key, type, value)
 		ctx:Throw("Table size limit reached.")
 	end
 
-	if type == "" or value == nil then
+	if valType == "" or value == nil then
 		tbl.tbl[key] = nil
 	else
 		tbl.tbl[key] = {type, value}
